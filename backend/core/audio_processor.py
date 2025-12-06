@@ -24,26 +24,41 @@ class AudioProcessor:
         self.sr = sr
         self.meter = pyln.Meter(sr)
 
-    def analyze_file(self, file_path: str) -> Optional[Dict]:
+    def analyze_file(self, file_path: str, fast_mode: bool = True) -> Optional[Dict]:
         """
         Analyze single audio file and extract features
 
         Args:
             file_path: Path to audio file
+            fast_mode: If True, extract only essential features (optimized for free tier)
 
         Returns:
             Dictionary of audio features or None if error
         """
         try:
-            # Load audio in stereo for stereo width analysis
-            y_stereo, sr = librosa.load(file_path, sr=self.sr, mono=False)
+            # Load audio (mono only for speed)
+            y, sr = librosa.load(file_path, sr=self.sr, mono=True)
 
-            # Convert to mono for most analysis
+            if fast_mode:
+                # FAST MODE: MINIMAL TEST - Only BPM (ultra fast, ~2-5 seconds per track)
+                features = {
+                    'bpm': self.extract_bpm(y, sr),
+                    # TEMPORARILY DISABLED FOR TESTING (uncomment to enable):
+                    # 'energy': self.extract_energy(y),
+                    # 'loudness': self.extract_loudness(y),
+                    # 'spectral_centroid': self.extract_spectral_centroid(y, sr),
+                    # 'dynamic_range': self.extract_dynamic_range(y),
+                    # 'rms': self.extract_rms(y),
+                }
+                return features
+
+            # FULL MODE: All features (slower, for local use)
+            # Load stereo for advanced analysis
+            y_stereo, sr = librosa.load(file_path, sr=self.sr, mono=False)
             if y_stereo.ndim > 1:
                 y = librosa.to_mono(y_stereo)
             else:
-                y = y_stereo
-                y_stereo = np.array([y, y])  # Fake stereo for mono files
+                y_stereo = np.array([y, y])
 
             # Extract basic features
             features = {
