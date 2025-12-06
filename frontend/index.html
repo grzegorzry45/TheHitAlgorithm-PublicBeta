@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE ALGORITHM</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="main-title">THE ALGORITHM</h1>
+            <p class="subtitle">&gt; Decode Spotify's DNA. Understand what makes music succeed.</p>
+            <p class="status">█ System ready for analysis</p>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Tab Navigation -->
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="analyze">&gt; ANALYZE PLAYLIST</button>
+            <button class="tab-btn" data-tab="library">&gt; YOUR LIBRARY</button>
+            <button class="tab-btn" data-tab="compare">&gt; COMPARE</button>
+            <button class="tab-btn" data-tab="recommendations">&gt; RECOMMENDATIONS</button>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content-wrapper">
+
+            <!-- ANALYZE PLAYLIST TAB -->
+            <div id="analyze-tab" class="tab-content active">
+                <div class="section-header">
+                    <h2>ANALYZE TARGET PLAYLIST</h2>
+                    <p>Upload 15-30 tracks from your target playlist to create a sonic profile</p>
+                </div>
+
+                <div class="upload-zone" id="playlist-upload">
+                    <div class="upload-icon">📁</div>
+                    <h3>Drag & Drop Playlist Files</h3>
+                    <p>or click to browse</p>
+                    <p class="file-types">Supported: MP3, WAV, FLAC</p>
+                    <input type="file" id="playlist-files" multiple accept=".mp3,.wav,.flac" style="display: none;">
+                </div>
+
+                <div id="playlist-file-list" class="file-list"></div>
+
+                <button id="analyze-playlist-btn" class="btn btn-primary" disabled>
+                    ANALYZE PLAYLIST
+                </button>
+
+                <div id="playlist-progress" class="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="playlist-progress-fill"></div>
+                    </div>
+                    <p class="progress-text" id="playlist-progress-text">Processing...</p>
+                </div>
+
+                <div id="playlist-results" class="results-panel" style="display: none;">
+                    <h3>PLAYLIST PROFILE</h3>
+                    <div id="playlist-profile-data" class="profile-data"></div>
+                </div>
+            </div>
+
+            <!-- YOUR LIBRARY TAB -->
+            <div id="library-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>YOUR TRACKS</h2>
+                    <p>Upload your tracks to compare against the target playlist</p>
+                </div>
+
+                <div class="upload-zone" id="user-tracks-upload">
+                    <div class="upload-icon">🎵</div>
+                    <h3>Drag & Drop Your Tracks</h3>
+                    <p>or click to browse</p>
+                    <p class="file-types">Supported: MP3, WAV, FLAC</p>
+                    <input type="file" id="user-track-files" multiple accept=".mp3,.wav,.flac" style="display: none;">
+                </div>
+
+                <div id="user-file-list" class="file-list"></div>
+
+                <button id="compare-batch-btn" class="btn btn-primary" disabled>
+                    ANALYZE & COMPARE
+                </button>
+
+                <div id="batch-progress" class="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="batch-progress-fill"></div>
+                    </div>
+                    <p class="progress-text" id="batch-progress-text">Processing...</p>
+                </div>
+            </div>
+
+            <!-- COMPARE TAB -->
+            <div id="compare-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>SINGLE TRACK COMPARE</h2>
+                    <p>Compare one track vs playlist or 1:1 track comparison</p>
+                </div>
+
+                <div class="compare-mode-selector">
+                    <label class="radio-label">
+                        <input type="radio" name="compare-mode" value="playlist" checked>
+                        <span>vs Playlist</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="compare-mode" value="track">
+                        <span>1:1 Track Compare</span>
+                    </label>
+                </div>
+
+                <div class="compare-grid">
+                    <div class="compare-section">
+                        <h3>YOUR TRACK</h3>
+                        <div class="upload-zone small" id="user-single-upload">
+                            <div class="upload-icon">🎧</div>
+                            <p>Drop your track here</p>
+                            <input type="file" id="user-single-file" accept=".mp3,.wav,.flac" style="display: none;">
+                        </div>
+                        <div id="user-single-name" class="track-name"></div>
+                    </div>
+
+                    <div class="compare-section" id="reference-section" style="display: none;">
+                        <h3>REFERENCE TRACK</h3>
+                        <div class="upload-zone small" id="reference-upload">
+                            <div class="upload-icon">🎼</div>
+                            <p>Drop reference track</p>
+                            <input type="file" id="reference-file" accept=".mp3,.wav,.flac" style="display: none;">
+                        </div>
+                        <div id="reference-name" class="track-name"></div>
+                    </div>
+                </div>
+
+                <button id="compare-single-btn" class="btn btn-primary" disabled>
+                    COMPARE TRACKS
+                </button>
+
+                <div id="compare-progress" class="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="compare-progress-fill"></div>
+                    </div>
+                    <p class="progress-text" id="compare-progress-text">Analyzing...</p>
+                </div>
+
+                <div id="compare-results" class="results-panel" style="display: none;">
+                    <h3>COMPARISON RESULTS</h3>
+                    <div id="compare-data" class="comparison-data"></div>
+                </div>
+            </div>
+
+            <!-- RECOMMENDATIONS TAB -->
+            <div id="recommendations-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>AI RECOMMENDATIONS</h2>
+                    <p>Actionable suggestions to match your target playlist</p>
+                </div>
+
+                <div id="recommendations-list" class="recommendations-panel">
+                    <p class="placeholder">Run a comparison to see recommendations</p>
+                </div>
+
+                <button id="generate-report-btn" class="btn btn-secondary" style="display: none;">
+                    EXPORT HTML REPORT
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Session Info (hidden) -->
+    <div id="session-data" style="display: none;">
+        <span id="session-id"></span>
+        <span id="has-playlist-profile">false</span>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
