@@ -17,6 +17,54 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeRecommendations();
 });
 
+// ===== PROGRESS STAGE HELPERS =====
+function updateProgressStage(containerId, stageName, state) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const stages = container.querySelectorAll('.progress-stage');
+    stages.forEach(stage => {
+        const stageData = stage.getAttribute('data-stage');
+        if (stageData === stageName) {
+            stage.className = `progress-stage ${state}`;
+        }
+    });
+}
+
+function resetProgressStages(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const stages = container.querySelectorAll('.progress-stage');
+    stages.forEach(stage => {
+        stage.className = 'progress-stage pending';
+    });
+}
+
+// ===== TRACK NAME DISPLAY HELPERS =====
+function displayTrackName(containerId, filename, onRemove) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const trackElement = document.createElement('div');
+    trackElement.className = 'track-name';
+    trackElement.innerHTML = `
+        <span>${filename}</span>
+        <button class="remove-track">×</button>
+    `;
+
+    trackElement.querySelector('.remove-track').addEventListener('click', onRemove);
+    container.appendChild(trackElement);
+}
+
+function clearTrackName(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+}
+
 // ===== TAB NAVIGATION =====
 function initializeTabs() {
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -107,10 +155,12 @@ async function analyzePlaylist() {
     analyzeBtn.disabled = true;
     progressContainer.style.display = 'block';
     resultsPanel.style.display = 'none';
+    resetProgressStages('playlist-progress-stages');
 
     try {
         // Upload files
-        progressText.textContent = 'Uploading files...';
+        updateProgressStage('playlist-progress-stages', 'upload', 'active');
+        progressText.textContent = 'Uploading files to server...';
         progressFill.style.width = '20%';
 
         const formData = new FormData();
@@ -129,9 +179,12 @@ async function analyzePlaylist() {
         sessionId = uploadData.session_id;
         document.getElementById('session-id').textContent = sessionId;
 
+        updateProgressStage('playlist-progress-stages', 'upload', 'completed');
+
         // Analyze playlist
-        progressText.textContent = 'Analyzing tracks...';
-        progressFill.style.width = '60%';
+        updateProgressStage('playlist-progress-stages', 'analyze', 'active');
+        progressText.textContent = 'Analyzing audio features...';
+        progressFill.style.width = '50%';
 
         const analyzeResponse = await fetch(`${API_BASE}/api/analyze/playlist`, {
             method: 'POST',
@@ -145,7 +198,20 @@ async function analyzePlaylist() {
 
         const analyzeData = await analyzeResponse.json();
 
+        updateProgressStage('playlist-progress-stages', 'analyze', 'completed');
+
+        // Create profile
+        updateProgressStage('playlist-progress-stages', 'profile', 'active');
+        progressText.textContent = 'Creating sonic profile...';
+        progressFill.style.width = '80%';
+
+        // Simulate profile creation delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        updateProgressStage('playlist-progress-stages', 'profile', 'completed');
+
         // Complete
+        updateProgressStage('playlist-progress-stages', 'complete', 'active');
         progressFill.style.width = '100%';
         progressText.textContent = 'Analysis complete!';
 
@@ -153,10 +219,12 @@ async function analyzePlaylist() {
         displayPlaylistProfile(analyzeData.profile);
         document.getElementById('has-playlist-profile').textContent = 'true';
 
+        updateProgressStage('playlist-progress-stages', 'complete', 'completed');
+
         setTimeout(() => {
             progressContainer.style.display = 'none';
             resultsPanel.style.display = 'block';
-        }, 500);
+        }, 800);
 
     } catch (error) {
         console.error('Error:', error);
@@ -255,11 +323,13 @@ async function compareBatch() {
 
     compareBtn.disabled = true;
     progressContainer.style.display = 'block';
+    resetProgressStages('batch-progress-stages');
 
     try {
         // Upload user tracks
+        updateProgressStage('batch-progress-stages', 'upload', 'active');
         progressText.textContent = 'Uploading your tracks...';
-        progressFill.style.width = '25%';
+        progressFill.style.width = '15%';
 
         const formData = new FormData();
         userTrackFiles.forEach(file => formData.append('files', file));
@@ -274,9 +344,17 @@ async function compareBatch() {
             throw new Error('Upload failed');
         }
 
+        updateProgressStage('batch-progress-stages', 'upload', 'completed');
+
+        // Analyze tracks
+        updateProgressStage('batch-progress-stages', 'analyze', 'active');
+        progressText.textContent = 'Analyzing audio features...';
+        progressFill.style.width = '40%';
+
         // Compare tracks
-        progressText.textContent = 'Analyzing and comparing...';
-        progressFill.style.width = '70%';
+        updateProgressStage('batch-progress-stages', 'compare', 'active');
+        progressText.textContent = 'Comparing vs playlist profile...';
+        progressFill.style.width = '60%';
 
         const compareResponse = await fetch(`${API_BASE}/api/compare/batch`, {
             method: 'POST',
@@ -290,18 +368,34 @@ async function compareBatch() {
 
         const compareData = await compareResponse.json();
 
+        updateProgressStage('batch-progress-stages', 'analyze', 'completed');
+        updateProgressStage('batch-progress-stages', 'compare', 'completed');
+
+        // Generate recommendations
+        updateProgressStage('batch-progress-stages', 'recommendations', 'active');
+        progressText.textContent = 'Generating recommendations...';
+        progressFill.style.width = '85%';
+
+        // Simulate recommendations generation delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        updateProgressStage('batch-progress-stages', 'recommendations', 'completed');
+
         // Complete
+        updateProgressStage('batch-progress-stages', 'complete', 'active');
         progressFill.style.width = '100%';
         progressText.textContent = 'Comparison complete!';
 
         // Show recommendations
         displayRecommendations(compareData.recommendations);
 
+        updateProgressStage('batch-progress-stages', 'complete', 'completed');
+
         // Switch to recommendations tab
         setTimeout(() => {
             progressContainer.style.display = 'none';
             document.querySelector('[data-tab="recommendations"]').click();
-        }, 500);
+        }, 800);
 
     } catch (error) {
         console.error('Error:', error);
@@ -335,14 +429,22 @@ function initializeSingleCompare() {
     userFileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
             userSingleFile = e.target.files[0];
-            document.getElementById('user-single-name').textContent = userSingleFile.name;
+            displayTrackName('user-single-name', userSingleFile.name, () => {
+                userSingleFile = null;
+                clearTrackName('user-single-name');
+                updateCompareBtnState();
+            });
             updateCompareBtnState();
         }
     });
     setupDragDrop(userUploadZone, (files) => {
         if (files.length > 0) {
             userSingleFile = files[0];
-            document.getElementById('user-single-name').textContent = userSingleFile.name;
+            displayTrackName('user-single-name', userSingleFile.name, () => {
+                userSingleFile = null;
+                clearTrackName('user-single-name');
+                updateCompareBtnState();
+            });
             updateCompareBtnState();
         }
     });
@@ -352,14 +454,22 @@ function initializeSingleCompare() {
     refFileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
             referenceFile = e.target.files[0];
-            document.getElementById('reference-name').textContent = referenceFile.name;
+            displayTrackName('reference-name', referenceFile.name, () => {
+                referenceFile = null;
+                clearTrackName('reference-name');
+                updateCompareBtnState();
+            });
             updateCompareBtnState();
         }
     });
     setupDragDrop(refUploadZone, (files) => {
         if (files.length > 0) {
             referenceFile = files[0];
-            document.getElementById('reference-name').textContent = referenceFile.name;
+            displayTrackName('reference-name', referenceFile.name, () => {
+                referenceFile = null;
+                clearTrackName('reference-name');
+                updateCompareBtnState();
+            });
             updateCompareBtnState();
         }
     });
@@ -410,10 +520,13 @@ async function compareSingleTrack() {
     compareBtn.disabled = true;
     progressContainer.style.display = 'block';
     resultsPanel.style.display = 'none';
+    resetProgressStages('compare-progress-stages');
 
     try {
-        progressText.textContent = 'Analyzing tracks...';
-        progressFill.style.width = '50%';
+        // Upload tracks
+        updateProgressStage('compare-progress-stages', 'upload', 'active');
+        progressText.textContent = 'Uploading tracks...';
+        progressFill.style.width = '15%';
 
         const formData = new FormData();
         formData.append('user_track', userSingleFile);
@@ -427,6 +540,26 @@ async function compareSingleTrack() {
             url += `&session_id=${sessionId}`;
         }
 
+        updateProgressStage('compare-progress-stages', 'upload', 'completed');
+
+        // Analyze your track
+        updateProgressStage('compare-progress-stages', 'analyze-user', 'active');
+        progressText.textContent = 'Analyzing your track...';
+        progressFill.style.width = '35%';
+
+        // Analyze reference track (if 1:1 mode)
+        if (mode === 'track') {
+            updateProgressStage('compare-progress-stages', 'analyze-user', 'completed');
+            updateProgressStage('compare-progress-stages', 'analyze-ref', 'active');
+            progressText.textContent = 'Analyzing reference track...';
+            progressFill.style.width = '55%';
+        }
+
+        // Compare
+        updateProgressStage('compare-progress-stages', 'compare', 'active');
+        progressText.textContent = 'Comparing parameters...';
+        progressFill.style.width = '75%';
+
         const response = await fetch(url, {
             method: 'POST',
             body: formData
@@ -438,16 +571,34 @@ async function compareSingleTrack() {
 
         const data = await response.json();
 
+        if (mode === 'playlist') {
+            updateProgressStage('compare-progress-stages', 'analyze-user', 'completed');
+            // Hide analyze-ref stage for playlist mode
+            const refStage = document.querySelector('#compare-progress-stages [data-stage="analyze-ref"]');
+            if (refStage) refStage.style.display = 'none';
+        } else {
+            updateProgressStage('compare-progress-stages', 'analyze-ref', 'completed');
+        }
+
+        updateProgressStage('compare-progress-stages', 'compare', 'completed');
+
+        // Complete
+        updateProgressStage('compare-progress-stages', 'complete', 'active');
         progressFill.style.width = '100%';
         progressText.textContent = 'Comparison complete!';
 
         // Display results
         displaySingleComparison(data);
 
+        updateProgressStage('compare-progress-stages', 'complete', 'completed');
+
         setTimeout(() => {
             progressContainer.style.display = 'none';
             resultsPanel.style.display = 'block';
-        }, 500);
+            // Reset ref stage visibility for next comparison
+            const refStage = document.querySelector('#compare-progress-stages [data-stage="analyze-ref"]');
+            if (refStage) refStage.style.display = '';
+        }, 800);
 
     } catch (error) {
         console.error('Error:', error);

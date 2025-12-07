@@ -284,6 +284,50 @@ body {
     text-align: center;
 }
 
+/* Detailed Progress Stages */
+.progress-stages {
+    margin-top: 16px;
+    display: grid;
+    gap: 8px;
+}
+
+.progress-stage {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-left: 3px solid #444444;
+    transition: all 0.3s ease;
+}
+
+.progress-stage.pending {
+    border-left-color: #444444;
+    color: #666666;
+}
+
+.progress-stage.active {
+    border-left-color: #ffffff;
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.progress-stage.completed {
+    border-left-color: #888888;
+    color: #b0b0b0;
+}
+
+.progress-stage-icon {
+    font-size: 14px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.progress-stage-text {
+    font-size: 9pt;
+    letter-spacing: 0.5px;
+}
+
 /* Results Panel */
 .results-panel {
     background-color: rgba(0, 0, 0, 0.7);
@@ -384,11 +428,39 @@ body {
     margin-bottom: 16px;
 }
 
+.track-name-container {
+    min-height: 32px;
+}
+
 .track-name {
     color: #d0d0d0;
     font-size: 10pt;
-    padding: 8px 0;
-    min-height: 32px;
+    padding: 10px 14px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid #888888;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.track-name:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.track-name .remove-track {
+    background: none;
+    border: none;
+    color: #999999;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 8px;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.track-name .remove-track:hover {
+    color: #ffffff;
 }
 
 /* Comparison Data */
