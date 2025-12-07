@@ -40,15 +40,15 @@ class AudioProcessor:
             y, sr = librosa.load(file_path, sr=self.sr, mono=True)
 
             if fast_mode:
-                # FAST MODE: MINIMAL TEST - Only BPM (ultra fast, ~2-5 seconds per track)
+                # FAST MODE: Essential features for basic comparison (~5-10 seconds per track)
                 features = {
                     'bpm': self.extract_bpm(y, sr),
-                    # TEMPORARILY DISABLED FOR TESTING (uncomment to enable):
-                    # 'energy': self.extract_energy(y),
-                    # 'loudness': self.extract_loudness(y),
-                    # 'spectral_centroid': self.extract_spectral_centroid(y, sr),
-                    # 'dynamic_range': self.extract_dynamic_range(y),
-                    # 'rms': self.extract_rms(y),
+                    'energy': self.extract_energy(y),
+                    'loudness': self.extract_loudness(y),
+                    'spectral_centroid': self.extract_spectral_centroid(y, sr),
+                    'dynamic_range': self.extract_dynamic_range(y),
+                    'rms': self.extract_rms(y),
+                    'key': 'Unknown',  # Default value for fast mode
                 }
                 return features
 
