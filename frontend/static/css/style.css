@@ -150,7 +150,8 @@ body {
     flex-wrap: wrap;
 }
 
-.preset-btn {
+.preset-btn,
+.preset-btn-compare {
     background-color: rgba(255, 255, 255, 0.05);
     color: #b0b0b0;
     border: 2px solid #666666;
@@ -161,12 +162,14 @@ body {
     transition: all 0.2s ease;
 }
 
-.preset-btn:hover {
+.preset-btn:hover,
+.preset-btn-compare:hover {
     background-color: rgba(255, 255, 255, 0.1);
     border-color: #888888;
 }
 
-.preset-btn.active {
+.preset-btn.active,
+.preset-btn-compare.active {
     background-color: rgba(255, 255, 255, 0.15);
     color: #ffffff;
     border-color: #ffffff;
@@ -349,6 +352,28 @@ body {
 
 .btn-secondary {
     background-color: rgba(255, 255, 255, 0.05);
+}
+
+.btn-cancel {
+    background-color: rgba(220, 38, 38, 0.2);
+    border: 2px solid #dc2626;
+    color: #ef4444;
+    margin-top: 16px;
+    padding: 10px 20px;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background-color: rgba(220, 38, 38, 0.3);
+    border-color: #ef4444;
+    color: #fca5a5;
+}
+
+.btn-cancel:disabled {
+    background-color: rgba(100, 100, 100, 0.1);
+    border-color: #444444;
+    color: #666666;
+    cursor: not-allowed;
 }
 
 /* Progress */

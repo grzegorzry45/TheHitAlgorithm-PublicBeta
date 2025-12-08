@@ -8,6 +8,11 @@ let userTrackFiles = [];
 let userSingleFile = null;
 let referenceFile = null;
 
+// Abort controllers for cancelling operations
+let playlistAbortController = null;
+let batchAbortController = null;
+let compareAbortController = null;
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     initializeTabs();
@@ -16,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeUserTracksUpload();
     initializeSingleCompare();
     initializeRecommendations();
+    initializeCancelButtons();
 });
 
 // ===== PROGRESS STAGE HELPERS =====
@@ -64,6 +70,39 @@ function clearTrackName(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
+}
+
+// ===== CANCEL BUTTONS =====
+function initializeCancelButtons() {
+    // Cancel playlist analysis
+    document.getElementById('cancel-playlist-btn').addEventListener('click', () => {
+        if (playlistAbortController) {
+            playlistAbortController.abort();
+            document.getElementById('playlist-progress-text').textContent = 'Analysis cancelled by user';
+            document.getElementById('playlist-progress-fill').style.width = '0%';
+            document.getElementById('analyze-playlist-btn').disabled = false;
+        }
+    });
+
+    // Cancel batch comparison
+    document.getElementById('cancel-batch-btn').addEventListener('click', () => {
+        if (batchAbortController) {
+            batchAbortController.abort();
+            document.getElementById('batch-progress-text').textContent = 'Comparison cancelled by user';
+            document.getElementById('batch-progress-fill').style.width = '0%';
+            document.getElementById('compare-batch-btn').disabled = false;
+        }
+    });
+
+    // Cancel single comparison
+    document.getElementById('cancel-compare-btn').addEventListener('click', () => {
+        if (compareAbortController) {
+            compareAbortController.abort();
+            document.getElementById('compare-progress-text').textContent = 'Comparison cancelled by user';
+            document.getElementById('compare-progress-fill').style.width = '0%';
+            updateCompareBtnState();
+        }
+    });
 }
 
 // ===== TAB NAVIGATION =====
@@ -274,6 +313,9 @@ async function analyzePlaylist() {
     const resultsPanel = document.getElementById('playlist-results');
     const analyzeBtn = document.getElementById('analyze-playlist-btn');
 
+    // Create new abort controller
+    playlistAbortController = new AbortController();
+
     analyzeBtn.disabled = true;
     progressContainer.style.display = 'block';
     resultsPanel.style.display = 'none';
@@ -290,7 +332,8 @@ async function analyzePlaylist() {
 
         const uploadResponse = await fetch(`${API_BASE}/api/upload/playlist`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            signal: playlistAbortController.signal
         });
 
         if (!uploadResponse.ok) {
@@ -316,7 +359,8 @@ async function analyzePlaylist() {
             body: JSON.stringify({
                 session_id: sessionId,
                 additional_params: selectedParams
-            })
+            }),
+            signal: playlistAbortController.signal
         });
 
         if (!analyzeResponse.ok) {
@@ -355,10 +399,15 @@ async function analyzePlaylist() {
 
     } catch (error) {
         console.error('Error:', error);
-        progressText.textContent = 'Error: ' + error.message;
+        if (error.name === 'AbortError') {
+            progressText.textContent = 'Analysis cancelled by user';
+        } else {
+            progressText.textContent = 'Error: ' + error.message;
+        }
         progressFill.style.width = '0%';
     } finally {
         analyzeBtn.disabled = false;
+        playlistAbortController = null;
     }
 }
 
@@ -448,6 +497,9 @@ async function compareBatch() {
     const progressText = document.getElementById('batch-progress-text');
     const compareBtn = document.getElementById('compare-batch-btn');
 
+    // Create new abort controller
+    batchAbortController = new AbortController();
+
     compareBtn.disabled = true;
     progressContainer.style.display = 'block';
     resetProgressStages('batch-progress-stages');
@@ -464,7 +516,8 @@ async function compareBatch() {
 
         const uploadResponse = await fetch(`${API_BASE}/api/upload/user-tracks?session_id=${sessionId}`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            signal: batchAbortController.signal
         });
 
         if (!uploadResponse.ok) {
@@ -491,7 +544,8 @@ async function compareBatch() {
             body: JSON.stringify({
                 session_id: sessionId,
                 additional_params: selectedParams
-            })
+            }),
+            signal: batchAbortController.signal
         });
 
         if (!compareResponse.ok) {
@@ -531,10 +585,15 @@ async function compareBatch() {
 
     } catch (error) {
         console.error('Error:', error);
-        progressText.textContent = 'Error: ' + error.message;
+        if (error.name === 'AbortError') {
+            progressText.textContent = 'Comparison cancelled by user';
+        } else {
+            progressText.textContent = 'Error: ' + error.message;
+        }
         progressFill.style.width = '0%';
     } finally {
         compareBtn.disabled = false;
+        batchAbortController = null;
     }
 }
 
@@ -649,6 +708,9 @@ async function compareSingleTrack() {
     const resultsPanel = document.getElementById('compare-results');
     const compareBtn = document.getElementById('compare-single-btn');
 
+    // Create new abort controller
+    compareAbortController = new AbortController();
+
     compareBtn.disabled = true;
     progressContainer.style.display = 'block';
     resultsPanel.style.display = 'none';
@@ -702,7 +764,8 @@ async function compareSingleTrack() {
 
         const response = await fetch(url, {
             method: 'POST',
-            body: formData
+            body: formData,
+            signal: compareAbortController.signal
         });
 
         if (!response.ok) {
@@ -742,10 +805,15 @@ async function compareSingleTrack() {
 
     } catch (error) {
         console.error('Error:', error);
-        progressText.textContent = 'Error: ' + error.message;
+        if (error.name === 'AbortError') {
+            progressText.textContent = 'Comparison cancelled by user';
+        } else {
+            progressText.textContent = 'Error: ' + error.message;
+        }
         progressFill.style.width = '0%';
     } finally {
         compareBtn.disabled = false;
+        compareAbortController = null;
     }
 }
 

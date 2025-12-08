@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE ALGORITHM</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=3.0">
+    <link rel="stylesheet" href="/static/css/style.css?v=5.0">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <h1 class="main-title">THE ALGORITHM</h1>
+            <h1 class="main-title">THE ALGORITHM <span style="font-size: 0.4em; opacity: 0.7; margin-left: 10px;">v5</span></h1>
             <p class="subtitle">&gt; Decode Spotify's DNA. Understand what makes music succeed.</p>
             <p class="status">█ System ready for analysis</p>
         </div>
@@ -119,6 +119,7 @@
                         <div class="progress-fill" id="playlist-progress-fill"></div>
                     </div>
                     <p class="progress-text" id="playlist-progress-text">Processing...</p>
+                    <button id="cancel-playlist-btn" class="btn btn-cancel">Cancel Analysis</button>
                     <div class="progress-stages" id="playlist-progress-stages">
                         <div class="progress-stage pending" data-stage="upload">
                             <span class="progress-stage-icon">📤</span>
@@ -171,6 +172,7 @@
                         <div class="progress-fill" id="batch-progress-fill"></div>
                     </div>
                     <p class="progress-text" id="batch-progress-text">Processing...</p>
+                    <button id="cancel-batch-btn" class="btn btn-cancel">Cancel Comparison</button>
                     <div class="progress-stages" id="batch-progress-stages">
                         <div class="progress-stage pending" data-stage="upload">
                             <span class="progress-stage-icon">📤</span>
@@ -309,6 +311,7 @@
                         <div class="progress-fill" id="compare-progress-fill"></div>
                     </div>
                     <p class="progress-text" id="compare-progress-text">Analyzing...</p>
+                    <button id="cancel-compare-btn" class="btn btn-cancel">Cancel Comparison</button>
                     <div class="progress-stages" id="compare-progress-stages">
                         <div class="progress-stage pending" data-stage="upload">
                             <span class="progress-stage-icon">📤</span>
@@ -364,6 +367,6 @@
         <span id="has-playlist-profile">false</span>
     </div>
 
-    <script src="/static/js/app.js?v=3.0"></script>
+    <script src="/static/js/app.js?v=5.0"></script>
 </body>
 </html>
