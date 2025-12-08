@@ -179,11 +179,14 @@ async def analyze_playlist(request: dict):
 
 
 @app.post("/api/compare/batch")
-async def compare_batch(session_id: str):
+async def compare_batch(request: dict):
     """
     Compare user tracks against playlist profile
     Returns recommendations for all tracks
     """
+    session_id = request.get("session_id")
+    additional_params = request.get("additional_params", [])
+
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -199,11 +202,11 @@ async def compare_batch(session_id: str):
     if not user_files:
         raise HTTPException(status_code=400, detail="No user tracks uploaded")
 
-    # Analyze user tracks
+    # Analyze user tracks with additional parameters
     user_results = []
     for file_path in user_files:
         try:
-            features = audio_processor.analyze_file(file_path)
+            features = audio_processor.analyze_file(file_path, additional_params=additional_params)
             if features:
                 features['filename'] = Path(file_path).name
                 user_results.append(features)
@@ -235,12 +238,21 @@ async def compare_single(
     mode: str,
     user_track: UploadFile = File(...),
     reference_track: Optional[UploadFile] = File(None),
-    session_id: Optional[str] = None
+    session_id: Optional[str] = None,
+    additional_params: Optional[str] = None
 ):
     """
     Compare single track vs playlist or vs another track
     Modes: 'playlist' or 'track'
     """
+    # Parse additional parameters if provided
+    params_list = []
+    if additional_params:
+        try:
+            params_list = json.loads(additional_params)
+        except json.JSONDecodeError:
+            params_list = []
+
     # For track mode, create temporary session if needed
     if mode == "track":
         if not session_id or session_id == "null":
@@ -260,8 +272,8 @@ async def compare_single(
     with open(user_path, "wb") as buffer:
         shutil.copyfileobj(user_track.file, buffer)
 
-    # Analyze user track
-    user_features = audio_processor.analyze_file(str(user_path))
+    # Analyze user track with additional parameters
+    user_features = audio_processor.analyze_file(str(user_path), additional_params=params_list)
     if not user_features:
         raise HTTPException(status_code=500, detail="Failed to analyze user track")
 
@@ -301,8 +313,8 @@ async def compare_single(
         with open(ref_path, "wb") as buffer:
             shutil.copyfileobj(reference_track.file, buffer)
 
-        # Analyze reference track
-        ref_features = audio_processor.analyze_file(str(ref_path))
+        # Analyze reference track with additional parameters
+        ref_features = audio_processor.analyze_file(str(ref_path), additional_params=params_list)
         if not ref_features:
             raise HTTPException(
                 status_code=500,

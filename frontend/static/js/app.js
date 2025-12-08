@@ -103,6 +103,7 @@ const PARAM_PRESETS = {
 };
 
 function initializeParameterSelection() {
+    // Initialize for Analyze Playlist tab
     const presetBtns = document.querySelectorAll('.preset-btn');
     const paramGroups = document.getElementById('param-groups');
     const checkboxes = document.querySelectorAll('input[name="param"]');
@@ -121,7 +122,7 @@ function initializeParameterSelection() {
                 paramGroups.style.display = 'block';
             } else {
                 paramGroups.style.display = 'none';
-                applyPreset(preset);
+                applyPreset(preset, 'param');
             }
         });
     });
@@ -134,11 +135,45 @@ function initializeParameterSelection() {
             paramGroups.style.display = 'block';
         });
     });
+
+    // Initialize for Compare tab
+    const presetBtnsCompare = document.querySelectorAll('.preset-btn-compare');
+    const paramGroupsCompare = document.getElementById('param-groups-compare');
+    const checkboxesCompare = document.querySelectorAll('input[name="param-compare"]');
+
+    // Preset button handlers for Compare
+    presetBtnsCompare.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const preset = btn.dataset.preset;
+
+            // Update active button
+            presetBtnsCompare.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Show/hide custom checkboxes
+            if (preset === 'custom') {
+                paramGroupsCompare.style.display = 'block';
+            } else {
+                paramGroupsCompare.style.display = 'none';
+                applyPreset(preset, 'param-compare');
+            }
+        });
+    });
+
+    // Checkbox change handler - switch to custom when user clicks
+    checkboxesCompare.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            presetBtnsCompare.forEach(b => b.classList.remove('active'));
+            const customBtn = document.querySelector('.preset-btn-compare[data-preset="custom"]');
+            if (customBtn) customBtn.classList.add('active');
+            paramGroupsCompare.style.display = 'block';
+        });
+    });
 }
 
-function applyPreset(preset) {
+function applyPreset(preset, checkboxName) {
     const params = PARAM_PRESETS[preset];
-    const checkboxes = document.querySelectorAll('input[name="param"]');
+    const checkboxes = document.querySelectorAll(`input[name="${checkboxName}"]`);
 
     checkboxes.forEach(checkbox => {
         checkbox.checked = params.includes(checkbox.value);
@@ -154,6 +189,23 @@ function getSelectedParameters() {
 
     // Custom selection
     const checkboxes = document.querySelectorAll('input[name="param"]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function getSelectedParametersCompare() {
+    const activePreset = document.querySelector('.preset-btn-compare.active');
+    if (!activePreset) {
+        return [];
+    }
+
+    const preset = activePreset.dataset.preset;
+
+    if (preset !== 'custom') {
+        return PARAM_PRESETS[preset];
+    }
+
+    // Custom selection
+    const checkboxes = document.querySelectorAll('input[name="param-compare"]:checked');
     return Array.from(checkboxes).map(cb => cb.value);
 }
 
@@ -431,10 +483,15 @@ async function compareBatch() {
         progressText.textContent = 'Comparing vs playlist profile...';
         progressFill.style.width = '60%';
 
+        const selectedParams = getSelectedParameters();
+
         const compareResponse = await fetch(`${API_BASE}/api/compare/batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session_id: sessionId })
+            body: JSON.stringify({
+                session_id: sessionId,
+                additional_params: selectedParams
+            })
         });
 
         if (!compareResponse.ok) {
@@ -609,10 +666,18 @@ async function compareSingleTrack() {
             formData.append('reference_track', referenceFile);
         }
 
+        // Get selected parameters
+        const selectedParams = getSelectedParametersCompare();
+
         // Build URL with query params
         let url = `${API_BASE}/api/compare/single?mode=${mode}`;
         if (sessionId && sessionId !== 'null') {
             url += `&session_id=${sessionId}`;
+        }
+
+        // Add parameters to formData
+        if (selectedParams.length > 0) {
+            formData.append('additional_params', JSON.stringify(selectedParams));
         }
 
         updateProgressStage('compare-progress-stages', 'upload', 'completed');
