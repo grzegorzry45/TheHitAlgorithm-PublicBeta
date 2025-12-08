@@ -3,7 +3,7 @@ FastAPI Backend for Audio Playlist Analyzer
 Web version of THE ALGORITHM
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
@@ -242,11 +242,11 @@ async def compare_batch(request: dict):
 
 @app.post("/api/compare/single")
 async def compare_single(
-    mode: str,
+    mode: str = Form(...),
     user_track: UploadFile = File(...),
     reference_track: Optional[UploadFile] = File(None),
-    session_id: Optional[str] = None,
-    additional_params: Optional[str] = None
+    session_id: Optional[str] = Form(None),
+    additional_params: Optional[str] = Form(None)
 ):
     """
     Compare single track vs playlist or vs another track

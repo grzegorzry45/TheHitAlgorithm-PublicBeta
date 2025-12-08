@@ -723,19 +723,17 @@ async function compareSingleTrack() {
         progressFill.style.width = '15%';
 
         const formData = new FormData();
+        formData.append('mode', mode);
         formData.append('user_track', userSingleFile);
         if (mode === 'track' && referenceFile) {
             formData.append('reference_track', referenceFile);
         }
+        if (sessionId && sessionId !== 'null') {
+            formData.append('session_id', sessionId);
+        }
 
         // Get selected parameters
         const selectedParams = getSelectedParametersCompare();
-
-        // Build URL with query params
-        let url = `${API_BASE}/api/compare/single?mode=${mode}`;
-        if (sessionId && sessionId !== 'null') {
-            url += `&session_id=${sessionId}`;
-        }
 
         // Add parameters to formData
         if (selectedParams.length > 0) {
@@ -762,7 +760,7 @@ async function compareSingleTrack() {
         progressText.textContent = 'Comparing parameters...';
         progressFill.style.width = '75%';
 
-        const response = await fetch(url, {
+        const response = await fetch(`${API_BASE}/api/compare/single`, {
             method: 'POST',
             body: formData,
             signal: compareAbortController.signal
