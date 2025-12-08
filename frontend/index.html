@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE ALGORITHM</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=2.0">
+    <link rel="stylesheet" href="/static/css/style.css?v=3.0">
 </head>
 <body>
     <!-- Header -->
@@ -34,6 +34,70 @@
                 <div class="section-header">
                     <h2>ANALYZE TARGET PLAYLIST</h2>
                     <p>Upload 15-30 tracks from your target playlist to create a sonic profile</p>
+                </div>
+
+                <!-- Parameter Selection -->
+                <div class="parameter-selection">
+                    <h3>Select Analysis Parameters</h3>
+                    <p class="param-hint">More parameters = slower analysis. Default includes essential features (~5-10s/track)</p>
+
+                    <div class="param-presets">
+                        <button class="preset-btn active" data-preset="essential">Essential (Fast)</button>
+                        <button class="preset-btn" data-preset="standard">Standard</button>
+                        <button class="preset-btn" data-preset="advanced">Advanced</button>
+                        <button class="preset-btn" data-preset="full">Full Analysis</button>
+                        <button class="preset-btn" data-preset="custom">Custom</button>
+                    </div>
+
+                    <div class="param-groups" id="param-groups" style="display: none;">
+                        <div class="param-group">
+                            <h4>🎵 Tier 1: Spectral (Fast) <span class="param-time">+3-5s</span></h4>
+                            <label><input type="checkbox" name="param" value="spectral_rolloff"> Spectral Rolloff</label>
+                            <label><input type="checkbox" name="param" value="spectral_flatness"> Spectral Flatness</label>
+                            <label><input type="checkbox" name="param" value="zero_crossing_rate"> Zero Crossing Rate</label>
+                        </div>
+
+                        <div class="param-group">
+                            <h4>🎚️ Tier 1B: Energy Distribution (Fast) <span class="param-time">+2-5s</span></h4>
+                            <label><input type="checkbox" name="param" value="low_energy"> Low Energy (20-250Hz)</label>
+                            <label><input type="checkbox" name="param" value="mid_energy"> Mid Energy (250Hz-4kHz)</label>
+                            <label><input type="checkbox" name="param" value="high_energy"> High Energy (4kHz+)</label>
+                        </div>
+
+                        <div class="param-group">
+                            <h4>🎹 Tier 2: Perceptual (Medium) <span class="param-time">+5-15s</span></h4>
+                            <label><input type="checkbox" name="param" value="danceability"> Danceability</label>
+                            <label><input type="checkbox" name="param" value="beat_strength"> Beat Strength</label>
+                            <label><input type="checkbox" name="param" value="sub_bass_presence"> Sub-Bass Presence</label>
+                            <label><input type="checkbox" name="param" value="stereo_width"> Stereo Width</label>
+                            <label><input type="checkbox" name="param" value="valence"> Valence (Mood)</label>
+                            <label><input type="checkbox" name="param" value="key_confidence"> Key Confidence</label>
+                        </div>
+
+                        <div class="param-group">
+                            <h4>🎚️ Tier 3: Production (Slow) <span class="param-time">+10-25s</span></h4>
+                            <label><input type="checkbox" name="param" value="loudness_range"> Loudness Range (LRA)</label>
+                            <label><input type="checkbox" name="param" value="true_peak"> True Peak</label>
+                            <label><input type="checkbox" name="param" value="crest_factor"> Crest Factor</label>
+                            <label><input type="checkbox" name="param" value="spectral_contrast"> Spectral Contrast</label>
+                            <label><input type="checkbox" name="param" value="transient_energy"> Transient Energy</label>
+                            <label><input type="checkbox" name="param" value="harmonic_to_noise_ratio"> Harmonic/Noise Ratio</label>
+                        </div>
+
+                        <div class="param-group">
+                            <h4>🎼 Tier 4: Compositional (Very Slow) <span class="param-time">+35-80s</span></h4>
+                            <label><input type="checkbox" name="param" value="harmonic_complexity"> Harmonic Complexity</label>
+                            <label><input type="checkbox" name="param" value="melodic_range"> Melodic Range</label>
+                            <label><input type="checkbox" name="param" value="rhythmic_density"> Rhythmic Density</label>
+                            <label><input type="checkbox" name="param" value="arrangement_density"> Arrangement Density</label>
+                            <label><input type="checkbox" name="param" value="repetition_score"> Repetition Score</label>
+                            <label><input type="checkbox" name="param" value="frequency_occupancy"> Frequency Occupancy</label>
+                            <label><input type="checkbox" name="param" value="timbral_diversity"> Timbral Diversity</label>
+                            <label><input type="checkbox" name="param" value="vocal_instrumental_ratio"> Vocal/Instrumental</label>
+                            <label><input type="checkbox" name="param" value="energy_curve"> Energy Curve</label>
+                            <label><input type="checkbox" name="param" value="call_response_presence"> Call-Response</label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="upload-zone" id="playlist-upload">
@@ -236,6 +300,6 @@
         <span id="has-playlist-profile">false</span>
     </div>
 
-    <script src="/static/js/app.js?v=2.0"></script>
+    <script src="/static/js/app.js?v=3.0"></script>
 </body>
 </html>

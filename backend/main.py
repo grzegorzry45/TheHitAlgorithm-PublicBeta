@@ -129,10 +129,13 @@ async def upload_user_tracks(session_id: str, files: List[UploadFile] = File(...
 
 
 @app.post("/api/analyze/playlist")
-async def analyze_playlist(session_id: str):
+async def analyze_playlist(request: dict):
     """
     Analyze uploaded playlist and create sonic profile
     """
+    session_id = request.get("session_id")
+    additional_params = request.get("additional_params", [])
+
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -146,7 +149,7 @@ async def analyze_playlist(session_id: str):
 
     for i, file_path in enumerate(playlist_files):
         try:
-            features = audio_processor.analyze_file(file_path)
+            features = audio_processor.analyze_file(file_path, additional_params=additional_params)
             if features:
                 features['filename'] = Path(file_path).name
                 results.append(features)

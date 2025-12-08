@@ -122,6 +122,101 @@ body {
     font-size: 10pt;
 }
 
+/* Parameter Selection */
+.parameter-selection {
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid #888888;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.parameter-selection h3 {
+    color: #ffffff;
+    font-size: 12pt;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.param-hint {
+    color: #b0b0b0;
+    font-size: 9pt;
+    margin-bottom: 16px;
+}
+
+.param-presets {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.preset-btn {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #b0b0b0;
+    border: 2px solid #666666;
+    padding: 8px 16px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 9pt;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preset-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #888888;
+}
+
+.preset-btn.active {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+.param-groups {
+    margin-top: 16px;
+    display: grid;
+    gap: 16px;
+}
+
+.param-group {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid #666666;
+    padding: 12px 16px;
+}
+
+.param-group h4 {
+    color: #ffffff;
+    font-size: 10pt;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.param-time {
+    color: #888888;
+    font-size: 8pt;
+    font-weight: normal;
+}
+
+.param-group label {
+    display: block;
+    color: #d0d0d0;
+    font-size: 9pt;
+    padding: 6px 0;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.param-group label:hover {
+    color: #ffffff;
+}
+
+.param-group input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
 /* Upload Zone */
 .upload-zone {
     background-color: rgba(0, 0, 0, 0.6);

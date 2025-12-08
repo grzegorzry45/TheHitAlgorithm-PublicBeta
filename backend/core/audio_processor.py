@@ -24,20 +24,22 @@ class AudioProcessor:
         self.sr = sr
         self.meter = pyln.Meter(sr)
 
-    def analyze_file(self, file_path: str, fast_mode: bool = True) -> Optional[Dict]:
+    def analyze_file(self, file_path: str, fast_mode: bool = True, additional_params: list = None) -> Optional[Dict]:
         """
         Analyze single audio file and extract features
 
         Args:
             file_path: Path to audio file
             fast_mode: If True, extract only essential features (optimized for free tier)
+            additional_params: List of additional parameters to extract beyond essential ones
 
         Returns:
             Dictionary of audio features or None if error
         """
         try:
-            # Load audio (mono only for speed)
+            # Load audio (mono only for speed initially)
             y, sr = librosa.load(file_path, sr=self.sr, mono=True)
+            y_stereo = None
 
             if fast_mode:
                 # FAST MODE: Essential features for basic comparison (~5-10 seconds per track)
@@ -50,6 +52,22 @@ class AudioProcessor:
                     'rms': self.extract_rms(y),
                     'key': 'Unknown',  # Default value for fast mode
                 }
+
+                # Add additional parameters if requested
+                if additional_params:
+                    # Check if stereo is needed
+                    stereo_params = ['stereo_width']
+                    needs_stereo = any(p in additional_params for p in stereo_params)
+
+                    if needs_stereo and y_stereo is None:
+                        y_stereo, sr = librosa.load(file_path, sr=self.sr, mono=False)
+                        if y_stereo.ndim == 1:
+                            y_stereo = np.array([y, y])
+
+                    # Extract additional parameters
+                    for param in additional_params:
+                        features.update(self._extract_param(param, y, sr, y_stereo, features))
+
                 return features
 
             # FULL MODE: All features (slower, for local use)
@@ -994,3 +1012,77 @@ class AudioProcessor:
             return 0.0
         except:
             return 0.0
+
+
+    def _extract_param(self, param: str, y: np.ndarray, sr: int, y_stereo: np.ndarray = None, features: dict = None) -> dict:
+        """Extract a single parameter dynamically"""
+        result = {}
+        features = features or {}
+
+        try:
+            # Tier 1
+            if param == 'spectral_rolloff':
+                result[param] = self.extract_spectral_rolloff(y, sr)
+            elif param == 'spectral_flatness':
+                result[param] = self.extract_spectral_flatness(y, sr)
+            elif param == 'zero_crossing_rate':
+                result[param] = self.extract_zcr(y)
+            # Tier 1B
+            elif param in ['low_energy', 'mid_energy', 'high_energy']:
+                energy_dist = self.extract_energy_distribution(y, sr)
+                result[param] = energy_dist[param.split('_')[0]]
+            # Tier 2
+            elif param == 'danceability':
+                bpm = features.get('bpm', self.extract_bpm(y, sr))
+                result[param] = self.extract_danceability(y, sr, bpm)
+            elif param == 'beat_strength':
+                result[param] = self.extract_beat_strength(y, sr)
+            elif param == 'sub_bass_presence':
+                result[param] = self.extract_sub_bass_presence(y, sr)
+            elif param == 'stereo_width':
+                result[param] = self.extract_stereo_width(y_stereo) if y_stereo is not None else 0.0
+            elif param == 'valence':
+                result[param] = self.extract_valence(y, sr, features)
+            elif param == 'key_confidence':
+                key_data = self.extract_key(y, sr)
+                result['key'], result['key_confidence'] = key_data['key'], key_data['confidence']
+            # Tier 3
+            elif param == 'loudness_range':
+                result[param] = self.extract_loudness_range(y)
+            elif param == 'true_peak':
+                result[param] = self.extract_true_peak(y)
+            elif param == 'crest_factor':
+                result[param] = self.extract_crest_factor(y)
+            elif param == 'spectral_contrast':
+                result[param] = self.extract_spectral_contrast(y, sr)
+            elif param == 'transient_energy':
+                result[param] = self.extract_transient_energy(y, sr)
+            elif param == 'harmonic_to_noise_ratio':
+                result[param] = self.extract_harmonic_to_noise_ratio(y, sr)
+            # Tier 4
+            elif param == 'harmonic_complexity':
+                result[param] = self.extract_harmonic_complexity(y, sr)
+            elif param == 'melodic_range':
+                result[param] = self.extract_melodic_range(y, sr)
+            elif param == 'rhythmic_density':
+                result[param] = self.extract_rhythmic_density(y, sr)
+            elif param == 'arrangement_density':
+                result[param] = self.extract_arrangement_density(y, sr)
+            elif param == 'repetition_score':
+                result[param] = self.extract_repetition_score(y, sr)
+            elif param == 'frequency_occupancy':
+                result[param] = self.extract_frequency_occupancy(y, sr)
+            elif param == 'timbral_diversity':
+                result[param] = self.extract_timbral_diversity(y, sr)
+            elif param == 'vocal_instrumental_ratio':
+                result[param] = self.extract_vocal_instrumental_ratio(y, sr)
+            elif param == 'energy_curve':
+                result[param] = self.extract_energy_curve(y, sr)
+            elif param == 'call_response_presence':
+                result[param] = self.extract_call_response(y, sr)
+        except Exception as e:
+            print(f"Error extracting {param}: {e}")
+            result[param] = 0.0
+
+        return result
+

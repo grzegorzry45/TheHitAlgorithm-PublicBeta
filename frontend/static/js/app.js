@@ -11,6 +11,7 @@ let referenceFile = null;
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     initializeTabs();
+    initializeParameterSelection();
     initializePlaylistUpload();
     initializeUserTracksUpload();
     initializeSingleCompare();
@@ -85,6 +86,75 @@ function initializeTabs() {
             document.getElementById(`${targetTab}-tab`).classList.add('active');
         });
     });
+}
+
+// ===== PARAMETER SELECTION =====
+const PARAM_PRESETS = {
+    essential: [],
+    standard: ['spectral_rolloff', 'spectral_flatness', 'zero_crossing_rate', 'low_energy', 'mid_energy', 'high_energy'],
+    advanced: ['spectral_rolloff', 'spectral_flatness', 'zero_crossing_rate', 'low_energy', 'mid_energy', 'high_energy',
+               'danceability', 'beat_strength', 'sub_bass_presence', 'stereo_width', 'valence', 'key_confidence'],
+    full: ['spectral_rolloff', 'spectral_flatness', 'zero_crossing_rate', 'low_energy', 'mid_energy', 'high_energy',
+           'danceability', 'beat_strength', 'sub_bass_presence', 'stereo_width', 'valence', 'key_confidence',
+           'loudness_range', 'true_peak', 'crest_factor', 'spectral_contrast', 'transient_energy', 'harmonic_to_noise_ratio',
+           'harmonic_complexity', 'melodic_range', 'rhythmic_density', 'arrangement_density', 'repetition_score',
+           'frequency_occupancy', 'timbral_diversity', 'vocal_instrumental_ratio', 'energy_curve', 'call_response_presence'],
+    custom: []
+};
+
+function initializeParameterSelection() {
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    const paramGroups = document.getElementById('param-groups');
+    const checkboxes = document.querySelectorAll('input[name="param"]');
+
+    // Preset button handlers
+    presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const preset = btn.dataset.preset;
+
+            // Update active button
+            presetBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Show/hide custom checkboxes
+            if (preset === 'custom') {
+                paramGroups.style.display = 'block';
+            } else {
+                paramGroups.style.display = 'none';
+                applyPreset(preset);
+            }
+        });
+    });
+
+    // Checkbox change handler - switch to custom when user clicks
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            presetBtns.forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-preset="custom"]').classList.add('active');
+            paramGroups.style.display = 'block';
+        });
+    });
+}
+
+function applyPreset(preset) {
+    const params = PARAM_PRESETS[preset];
+    const checkboxes = document.querySelectorAll('input[name="param"]');
+
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = params.includes(checkbox.value);
+    });
+}
+
+function getSelectedParameters() {
+    const activePreset = document.querySelector('.preset-btn.active').dataset.preset;
+
+    if (activePreset !== 'custom') {
+        return PARAM_PRESETS[activePreset];
+    }
+
+    // Custom selection
+    const checkboxes = document.querySelectorAll('input[name="param"]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
 }
 
 // ===== PLAYLIST UPLOAD & ANALYSIS =====
@@ -186,10 +256,15 @@ async function analyzePlaylist() {
         progressText.textContent = 'Analyzing audio features...';
         progressFill.style.width = '50%';
 
+        const selectedParams = getSelectedParameters();
+
         const analyzeResponse = await fetch(`${API_BASE}/api/analyze/playlist`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session_id: sessionId })
+            body: JSON.stringify({
+                session_id: sessionId,
+                additional_params: selectedParams
+            })
         });
 
         if (!analyzeResponse.ok) {
