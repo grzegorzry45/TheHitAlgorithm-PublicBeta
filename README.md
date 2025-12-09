@@ -50,40 +50,10 @@ python main.py
 
 The frontend is served automatically by FastAPI.
 
-## Deployment to Render (Free Hosting)
-
-### Option 1: Using render.yaml (Recommended)
-
-1. Push code to GitHub
-2. Go to [render.com](https://render.com)
-3. Create new account (free)
-4. Click "New +" → "Blueprint"
-5. Connect your GitHub repo
-6. Render will automatically detect `render.yaml` and deploy!
-
-### Option 2: Manual Setup
-
-1. Go to [render.com](https://render.com)
-2. Click "New +" → "Web Service"
-3. Connect GitHub repo
-4. Configure:
-   - **Name**: the-algorithm
-   - **Root Directory**: (leave empty)
-   - **Build Command**: `pip install -r backend/requirements.txt`
-   - **Start Command**: `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
-   - **Environment**: Python 3
-5. Click "Create Web Service"
-
-Your app will be live at: `https://the-algorithm-[random].onrender.com`
-
-## Environment Variables
-
-No environment variables needed! Everything works out of the box.
-
 ## File Structure
 
 ```
-web/
+TheSpotifyAlgorithm-web/
 ├── backend/
 │   ├── main.py              # FastAPI application
 │   ├── core/                # Audio analysis logic
@@ -101,7 +71,6 @@ web/
 │       │   └── style.css    # Dark futuristic theme
 │       └── js/
 │           └── app.js       # Frontend logic
-├── render.yaml              # Render deployment config
 └── README.md
 ```
 
@@ -147,35 +116,8 @@ web/
    - View AI-generated suggestions
    - Export HTML report
 
-## Render Free Tier Limits
-
-- **Memory**: 512 MB RAM
-- **Build Time**: 15 minutes max
-- **Spin Down**: After 15 min inactivity (first request takes ~30 sec)
-- **Storage**: Temporary (files deleted on restart)
-
-**Note**: For production use with high traffic, consider upgrading to paid tier.
-
-## Troubleshooting
-
-### Server takes long to respond on first request
-- Render free tier spins down after inactivity
-- First request wakes it up (~30 seconds)
-- Subsequent requests are fast
-
-### Out of memory errors
-- Render free tier has 512 MB limit
-- Analyzing 30 large WAV files may exceed this
-- Use MP3 files (smaller) or upgrade to paid tier
-
-### Files disappear after restart
-- Render uses ephemeral storage
-- Files in `uploads/` are temporary
-- Download reports immediately after generation
-
 ## Future Enhancements
 
-- Persistent storage (AWS S3, Cloudinary)
 - User authentication & sessions
 - Spotify API integration (auto-fetch audio features)
 - Database for storing analysis results

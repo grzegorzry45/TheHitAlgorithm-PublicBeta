@@ -9,14 +9,13 @@ Complete web version of your PyQt6 desktop app with:
 - ✅ Drag & drop file upload
 - ✅ Real-time progress bars
 - ✅ HTML report generation
-- ✅ Ready for free deployment to Render
 
 ---
 
 ## File Structure
 
 ```
-web/
+TheSpotifyAlgorithm-web/
 │
 ├── backend/                          # FastAPI Backend
 │   ├── main.py                       # Main FastAPI application (400 lines)
@@ -62,11 +61,9 @@ web/
 │               ├── Progress tracking # Real-time updates
 │               └── Results display   # Format and show data
 │
-├── render.yaml                       # Render deployment config
-├── Procfile                          # Alternative deployment config
 ├── .gitignore                        # Git ignore rules
+├── requirements.txt                  # Python dependencies
 ├── README.md                         # Technical documentation
-├── DEPLOYMENT_GUIDE.md               # Step-by-step deployment
 └── PROJECT_STRUCTURE.md              # This file
 ```
 
@@ -309,11 +306,6 @@ Click "Export" → /api/report/generate
 - Vanilla JavaScript (ES6+)
 - No frameworks! (lightweight & fast)
 
-**Deployment:**
-- Render (free hosting)
-- Git + GitHub (version control)
-- YAML configuration
-
 ---
 
 ## What Changed from Desktop App?
@@ -331,7 +323,6 @@ Click "Export" → /api/report/generate
 🆕 API endpoints (RESTful)
 🆕 Session management (UUID-based)
 🆕 Browser-based UI (no installation needed)
-🆕 Cloud deployment (accessible anywhere)
 🆕 Responsive design (works on mobile)
 
 ### Not Changed:
@@ -352,13 +343,10 @@ Click "Export" → /api/report/generate
 
 **File Size Limits:**
 - Recommended: MP3 files (5-10 MB each)
-- Max total: ~500 MB (Render free tier limit)
 - WAV files: Use with caution (large)
 
 **Memory Usage:**
 - Per session: ~100-200 MB
-- Render free tier: 512 MB total
-- Supports 2-3 concurrent users
 
 ---
 
@@ -366,34 +354,17 @@ Click "Export" → /api/report/generate
 
 Now that the web app is built:
 
-1. **Test Locally** (optional):
+1. **Test Locally**:
    ```bash
-   cd web/backend
+   cd backend
    pip install -r requirements.txt
    python main.py
    # Open http://localhost:8000
    ```
 
-2. **Deploy to Render**:
-   - Follow `DEPLOYMENT_GUIDE.md`
-   - Push to GitHub
-   - Connect Render
-   - Go live!
-
-3. **Share with Users**:
-   - Send them the Render URL
-   - No installation needed
-   - Works on any device with browser
-
-4. **Future Enhancements**:
+2. **Future Enhancements**:
    - Add user authentication
    - Integrate Spotify API
    - Add database for history
    - Real-time WebSocket updates
    - Custom branding/domain
-
----
-
-**Ready to deploy!** 🚀
-
-See `DEPLOYMENT_GUIDE.md` for step-by-step instructions.
