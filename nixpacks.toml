@@ -1,5 +1,2 @@
 [phases.setup]
 aptPkgs = ["ffmpeg", "libsndfile1"]
-
-[phases.install]
-cmds = ["pip install -r requirements.txt"]
