@@ -47,56 +47,58 @@
 
                 <!-- Parameter Selection -->
                 <div class="parameter-selection">
-                    <h3>Select Analysis Parameters</h3>
-                    <p class="param-hint">Choose which parameters to analyze. More parameters = slower analysis (~5-80s/track depending on selection)</p>
+                    <h3 class="collapsible-header" data-target="analyze-params-content">Select Analysis Parameters <span class="collapse-icon">▼</span></h3>
+                    <div id="analyze-params-content" class="collapsible-content collapsed">
+                        <p class="param-hint">Choose which parameters to analyze. More parameters = slower analysis (~5-80s/track depending on selection)</p>
 
-                    <div class="param-groups" id="param-groups">
-                        <div class="param-group">
-                            <h4>🎵 Tier 1: Spectral (Fast) <span class="param-time">+3-5s</span></h4>
-                            <label><input type="checkbox" name="param" value="spectral_rolloff"> Spectral Rolloff</label>
-                            <label><input type="checkbox" name="param" value="spectral_flatness"> Spectral Flatness</label>
-                            <label><input type="checkbox" name="param" value="zero_crossing_rate"> Zero Crossing Rate</label>
-                        </div>
+                        <div class="param-groups" id="param-groups">
+                            <div class="param-group">
+                                <h4>🎵 Tier 1: Spectral (Fast) <span class="param-time">+3-5s</span></h4>
+                                <label><input type="checkbox" name="param" value="spectral_rolloff"> Spectral Rolloff</label>
+                                <label><input type="checkbox" name="param" value="spectral_flatness"> Spectral Flatness</label>
+                                <label><input type="checkbox" name="param" value="zero_crossing_rate"> Zero Crossing Rate</label>
+                            </div>
 
-                        <div class="param-group">
-                            <h4>🎚️ Tier 1B: Energy Distribution (Fast) <span class="param-time">+2-5s</span></h4>
-                            <label><input type="checkbox" name="param" value="low_energy"> Low Energy (20-250Hz)</label>
-                            <label><input type="checkbox" name="param" value="mid_energy"> Mid Energy (250Hz-4kHz)</label>
-                            <label><input type="checkbox" name="param" value="high_energy"> High Energy (4kHz+)</label>
-                        </div>
+                            <div class="param-group">
+                                <h4>🎚️ Tier 1B: Energy Distribution (Fast) <span class="param-time">+2-5s</span></h4>
+                                <label><input type="checkbox" name="param" value="low_energy"> Low Energy (20-250Hz)</label>
+                                <label><input type="checkbox" name="param" value="mid_energy"> Mid Energy (250Hz-4kHz)</label>
+                                <label><input type="checkbox" name="param" value="high_energy"> High Energy (4kHz+)</label>
+                            </div>
 
-                        <div class="param-group">
-                            <h4>🎹 Tier 2: Perceptual (Medium) <span class="param-time">+5-15s</span></h4>
-                            <label><input type="checkbox" name="param" value="danceability"> Danceability</label>
-                            <label><input type="checkbox" name="param" value="beat_strength"> Beat Strength</label>
-                            <label><input type="checkbox" name="param" value="sub_bass_presence"> Sub-Bass Presence</label>
-                            <label><input type="checkbox" name="param" value="stereo_width"> Stereo Width</label>
-                            <label><input type="checkbox" name="param" value="valence"> Valence (Mood)</label>
-                            <label><input type="checkbox" name="param" value="key_confidence"> Key Confidence</label>
-                        </div>
+                            <div class="param-group">
+                                <h4>🎹 Tier 2: Perceptual (Medium) <span class="param-time">+5-15s</span></h4>
+                                <label><input type="checkbox" name="param" value="danceability"> Danceability</label>
+                                <label><input type="checkbox" name="param" value="beat_strength"> Beat Strength</label>
+                                <label><input type="checkbox" name="param" value="sub_bass_presence"> Sub-Bass Presence</label>
+                                <label><input type="checkbox" name="param" value="stereo_width"> Stereo Width</label>
+                                <label><input type="checkbox" name="param" value="valence"> Valence (Mood)</label>
+                                <label><input type="checkbox" name="param" value="key_confidence"> Key Confidence</label>
+                            </div>
 
-                        <div class="param-group">
-                            <h4>🎚️ Tier 3: Production (Slow) <span class="param-time">+10-25s</span></h4>
-                            <label><input type="checkbox" name="param" value="loudness_range"> Loudness Range (LRA)</label>
-                            <label><input type="checkbox" name="param" value="true_peak"> True Peak</label>
-                            <label><input type="checkbox" name="param" value="crest_factor"> Crest Factor</label>
-                            <label><input type="checkbox" name="param" value="spectral_contrast"> Spectral Contrast</label>
-                            <label><input type="checkbox" name="param" value="transient_energy"> Transient Energy</label>
-                            <label><input type="checkbox" name="param" value="harmonic_to_noise_ratio"> Harmonic/Noise Ratio</label>
-                        </div>
+                            <div class="param-group">
+                                <h4>🎚️ Tier 3: Production (Slow) <span class="param-time">+10-25s</span></h4>
+                                <label><input type="checkbox" name="param" value="loudness_range"> Loudness Range (LRA)</label>
+                                <label><input type="checkbox" name="param" value="true_peak"> True Peak</label>
+                                <label><input type="checkbox" name="param" value="crest_factor"> Crest Factor</label>
+                                <label><input type="checkbox" name="param" value="spectral_contrast"> Spectral Contrast</label>
+                                <label><input type="checkbox" name="param" value="transient_energy"> Transient Energy</label>
+                                <label><input type="checkbox" name="param" value="harmonic_to_noise_ratio"> Harmonic/Noise Ratio</label>
+                            </div>
 
-                        <div class="param-group">
-                            <h4>🎼 Tier 4: Compositional (Very Slow) <span class="param-time">+35-80s</span></h4>
-                            <label><input type="checkbox" name="param" value="harmonic_complexity"> Harmonic Complexity</label>
-                            <label><input type="checkbox" name="param" value="melodic_range"> Melodic Range</label>
-                            <label><input type="checkbox" name="param" value="rhythmic_density"> Rhythmic Density</label>
-                            <label><input type="checkbox" name="param" value="arrangement_density"> Arrangement Density</label>
-                            <label><input type="checkbox" name="param" value="repetition_score"> Repetition Score</label>
-                            <label><input type="checkbox" name="param" value="frequency_occupancy"> Frequency Occupancy</label>
-                            <label><input type="checkbox" name="param" value="timbral_diversity"> Timbral Diversity</label>
-                            <label><input type="checkbox" name="param" value="vocal_instrumental_ratio"> Vocal/Instrumental</label>
-                            <label><input type="checkbox" name="param" value="energy_curve"> Energy Curve</label>
-                            <label><input type="checkbox" name="param" value="call_response_presence"> Call-Response</label>
+                            <div class="param-group">
+                                <h4>🎼 Tier 4: Compositional (Very Slow) <span class="param-time">+35-80s</span></h4>
+                                <label><input type="checkbox" name="param" value="harmonic_complexity"> Harmonic Complexity</label>
+                                <label><input type="checkbox" name="param" value="melodic_range"> Melodic Range</label>
+                                <label><input type="checkbox" name="param" value="rhythmic_density"> Rhythmic Density</label>
+                                <label><input type="checkbox" name="param" value="arrangement_density"> Arrangement Density</label>
+                                <label><input type="checkbox" name="param" value="repetition_score"> Repetition Score</label>
+                                <label><input type="checkbox" name="param" value="frequency_occupancy"> Frequency Occupancy</label>
+                                <label><input type="checkbox" name="param" value="timbral_diversity"> Timbral Diversity</label>
+                                <label><input type="checkbox" name="param" value="vocal_instrumental_ratio"> Vocal/Instrumental</label>
+                                <label><input type="checkbox" name="param" value="energy_curve"> Energy Curve</label>
+                                <label><input type="checkbox" name="param" value="call_response_presence"> Call-Response</label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -248,56 +250,58 @@
 
                 <!-- Parameter Selection for Compare -->
                 <div class="parameter-selection">
-                    <h3>Select Analysis Parameters</h3>
-                    <p class="param-hint">Choose which parameters to analyze. More parameters = slower analysis (~5-80s/track depending on selection)</p>
+                    <h3 class="collapsible-header" data-target="compare-params-content">Select Analysis Parameters <span class="collapse-icon">▼</span></h3>
+                    <div id="compare-params-content" class="collapsible-content collapsed">
+                        <p class="param-hint">Choose which parameters to analyze. More parameters = slower analysis (~5-80s/track depending on selection)</p>
 
-                    <div class="param-groups" id="param-groups-compare">
-                        <div class="param-group">
-                            <h4>🎵 Tier 1: Spectral (Fast) <span class="param-time">+3-5s</span></h4>
-                            <label><input type="checkbox" name="param-compare" value="spectral_rolloff"> Spectral Rolloff</label>
-                            <label><input type="checkbox" name="param-compare" value="spectral_flatness"> Spectral Flatness</label>
-                            <label><input type="checkbox" name="param-compare" value="zero_crossing_rate"> Zero Crossing Rate</label>
-                        </div>
+                        <div class="param-groups" id="param-groups-compare">
+                            <div class="param-group">
+                                <h4>🎵 Tier 1: Spectral (Fast) <span class="param-time">+3-5s</span></h4>
+                                <label><input type="checkbox" name="param-compare" value="spectral_rolloff"> Spectral Rolloff</label>
+                                <label><input type="checkbox" name="param-compare" value="spectral_flatness"> Spectral Flatness</label>
+                                <label><input type="checkbox" name="param-compare" value="zero_crossing_rate"> Zero Crossing Rate</label>
+                            </div>
 
-                        <div class="param-group">
-                            <h4>🎚️ Tier 1B: Energy Distribution (Fast) <span class="param-time">+2-5s</span></h4>
-                            <label><input type="checkbox" name="param-compare" value="low_energy"> Low Energy (20-250Hz)</label>
-                            <label><input type="checkbox" name="param-compare" value="mid_energy"> Mid Energy (250Hz-4kHz)</label>
-                            <label><input type="checkbox" name="param-compare" value="high_energy"> High Energy (4kHz+)</label>
-                        </div>
+                            <div class="param-group">
+                                <h4>🎚️ Tier 1B: Energy Distribution (Fast) <span class="param-time">+2-5s</span></h4>
+                                <label><input type="checkbox" name="param-compare" value="low_energy"> Low Energy (20-250Hz)</label>
+                                <label><input type="checkbox" name="param-compare" value="mid_energy"> Mid Energy (250Hz-4kHz)</label>
+                                <label><input type="checkbox" name="param-compare" value="high_energy"> High Energy (4kHz+)</label>
+                            </div>
 
-                        <div class="param-group">
-                            <h4>🎹 Tier 2: Perceptual (Medium) <span class="param-time">+5-15s</span></h4>
-                            <label><input type="checkbox" name="param-compare" value="danceability"> Danceability</label>
-                            <label><input type="checkbox" name="param-compare" value="beat_strength"> Beat Strength</label>
-                            <label><input type="checkbox" name="param-compare" value="sub_bass_presence"> Sub-Bass Presence</label>
-                            <label><input type="checkbox" name="param-compare" value="stereo_width"> Stereo Width</label>
-                            <label><input type="checkbox" name="param-compare" value="valence"> Valence (Mood)</label>
-                            <label><input type="checkbox" name="param-compare" value="key_confidence"> Key Confidence</label>
-                        </div>
+                            <div class="param-group">
+                                <h4>🎹 Tier 2: Perceptual (Medium) <span class="param-time">+5-15s</span></h4>
+                                <label><input type="checkbox" name="param-compare" value="danceability"> Danceability</label>
+                                <label><input type="checkbox" name="param-compare" value="beat_strength"> Beat Strength</label>
+                                <label><input type="checkbox" name="param-compare" value="sub_bass_presence"> Sub-Bass Presence</label>
+                                <label><input type="checkbox" name="param-compare" value="stereo_width"> Stereo Width</label>
+                                <label><input type="checkbox" name="param-compare" value="valence"> Valence (Mood)</label>
+                                <label><input type="checkbox" name="param-compare" value="key_confidence"> Key Confidence</label>
+                            </div>
 
-                        <div class="param-group">
-                            <h4>🎚️ Tier 3: Production (Slow) <span class="param-time">+10-25s</span></h4>
-                            <label><input type="checkbox" name="param-compare" value="loudness_range"> Loudness Range (LRA)</label>
-                            <label><input type="checkbox" name="param-compare" value="true_peak"> True Peak</label>
-                            <label><input type="checkbox" name="param-compare" value="crest_factor"> Crest Factor</label>
-                            <label><input type="checkbox" name="param-compare" value="spectral_contrast"> Spectral Contrast</label>
-                            <label><input type="checkbox" name="param-compare" value="transient_energy"> Transient Energy</label>
-                            <label><input type="checkbox" name="param-compare" value="harmonic_to_noise_ratio"> Harmonic/Noise Ratio</label>
-                        </div>
+                            <div class="param-group">
+                                <h4>🎚️ Tier 3: Production (Slow) <span class="param-time">+10-25s</span></h4>
+                                <label><input type="checkbox" name="param-compare" value="loudness_range"> Loudness Range (LRA)</label>
+                                <label><input type="checkbox" name="param-compare" value="true_peak"> True Peak</label>
+                                <label><input type="checkbox" name="param-compare" value="crest_factor"> Crest Factor</label>
+                                <label><input type="checkbox" name="param-compare" value="spectral_contrast"> Spectral Contrast</label>
+                                <label><input type="checkbox" name="param-compare" value="transient_energy"> Transient Energy</label>
+                                <label><input type="checkbox" name="param-compare" value="harmonic_to_noise_ratio"> Harmonic/Noise Ratio</label>
+                            </div>
 
-                        <div class="param-group">
-                            <h4>🎼 Tier 4: Compositional (Very Slow) <span class="param-time">+35-80s</span></h4>
-                            <label><input type="checkbox" name="param-compare" value="harmonic_complexity"> Harmonic Complexity</label>
-                            <label><input type="checkbox" name="param-compare" value="melodic_range"> Melodic Range</label>
-                            <label><input type="checkbox" name="param-compare" value="rhythmic_density"> Rhythmic Density</label>
-                            <label><input type="checkbox" name="param-compare" value="arrangement_density"> Arrangement Density</label>
-                            <label><input type="checkbox" name="param-compare" value="repetition_score"> Repetition Score</label>
-                            <label><input type="checkbox" name="param-compare" value="frequency_occupancy"> Frequency Occupancy</label>
-                            <label><input type="checkbox" name="param-compare" value="timbral_diversity"> Timbral Diversity</label>
-                            <label><input type="checkbox" name="param-compare" value="vocal_instrumental_ratio"> Vocal/Instrumental</label>
-                            <label><input type="checkbox" name="param-compare" value="energy_curve"> Energy Curve</label>
-                            <label><input type="checkbox" name="param-compare" value="call_response_presence"> Call-Response</label>
+                            <div class="param-group">
+                                <h4>🎼 Tier 4: Compositional (Very Slow) <span class="param-time">+35-80s</span></h4>
+                                <label><input type="checkbox" name="param-compare" value="harmonic_complexity"> Harmonic Complexity</label>
+                                <label><input type="checkbox" name="param-compare" value="melodic_range"> Melodic Range</label>
+                                <label><input type="checkbox" name="param-compare" value="rhythmic_density"> Rhythmic Density</label>
+                                <label><input type="checkbox" name="param-compare" value="arrangement_density"> Arrangement Density</label>
+                                <label><input type="checkbox" name="param-compare" value="repetition_score"> Repetition Score</label>
+                                <label><input type="checkbox" name="param-compare" value="frequency_occupancy"> Frequency Occupancy</label>
+                                <label><input type="checkbox" name="param-compare" value="timbral_diversity"> Timbral Diversity</label>
+                                <label><input type="checkbox" name="param-compare" value="vocal_instrumental_ratio"> Vocal/Instrumental</label>
+                                <label><input type="checkbox" name="param-compare" value="energy_curve"> Energy Curve</label>
+                                <label><input type="checkbox" name="param-compare" value="call_response_presence"> Call-Response</label>
+                            </div>
                         </div>
                     </div>
                 </div>

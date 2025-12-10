@@ -232,6 +232,40 @@ body {
     font-weight: 700;
 }
 
+/* Collapsible sections */
+.collapsible-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px; /* Spacing for the header */
+    margin-bottom: 15px; /* Spacing between header and content */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator */
+    transition: border-bottom var(--transition-fast);
+}
+
+.collapsible-header:hover {
+    border-bottom-color: var(--spotify-green);
+}
+
+.collapsible-header .collapse-icon {
+    transition: transform var(--transition-fast);
+}
+
+.collapsible-header.active .collapse-icon {
+    transform: rotate(180deg);
+}
+
+.collapsible-content {
+    overflow: hidden;
+    transition: max-height var(--transition-fast) ease-out;
+}
+
+.collapsible-content.collapsed {
+    max-height: 0;
+    margin-bottom: 0; /* Remove margin when collapsed */
+}
+
 .param-hint {
     color: var(--text-subdued);
     font-size: 13px;
@@ -1070,9 +1104,9 @@ body {
 .presets-section {
     margin-top: 40px;
     padding: 30px;
-    background: #0a0a0a;
+    background: var(--bg-elevated);
     border: 1px solid #333;
-    border-radius: 8px;
+    border-radius: 0;
 }
 
 #compare-presets-section {

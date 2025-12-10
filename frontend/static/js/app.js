@@ -40,8 +40,31 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeUnloadWarning();
         initializePresets();
         initializeCompareModeToggle();
+        initializeCollapsibleSections(); // New call
     }
 });
+
+// ===== COLLAPSIBLE SECTIONS =====
+function initializeCollapsibleSections() {
+    const headers = document.querySelectorAll('.collapsible-header');
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const targetId = header.dataset.target;
+            const content = document.getElementById(targetId);
+            if (content) {
+                header.classList.toggle('active');
+                content.classList.toggle('collapsed');
+                // Adjust max-height for smooth transition
+                if (content.classList.contains('collapsed')) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            }
+        });
+    });
+}
+
 
 // ===== AUTHENTICATION =====
 
