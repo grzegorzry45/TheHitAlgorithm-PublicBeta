@@ -1319,34 +1319,286 @@ const PresetManager = {
         return false;
     },
 
-    // Delete preset
-    delete(id) {
-        const presets = this.getAll();
-        const filtered = presets.filter(p => p.id !== id);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
-        return true;
-    }
-};
+        // Delete preset
+
 
-// Initialize presets functionality
-function initializePresets() {
-    const saveBtn = document.getElementById('save-preset-btn');
-    const presetModal = document.getElementById('preset-modal');
-    const presetNameInput = document.getElementById('preset-name-input');
-    const presetSaveConfirm = document.getElementById('preset-save-confirm');
-    const presetSaveCancel = document.getElementById('preset-save-cancel');
+        delete(id) {
+
 
-    const renameModal = document.getElementById('rename-modal');
-    const renameInput = document.getElementById('rename-input');
-    const renameConfirm = document.getElementById('rename-confirm');
-    const renameCancel = document.getElementById('rename-cancel');
+            const presets = this.getAll();
+
 
-    const loadPresetModal = document.getElementById('load-preset-modal');
-    const showPresetModalBtn = document.getElementById('show-preset-modal-btn');
-    const loadPresetCancel = document.getElementById('load-preset-cancel');
+            const filtered = presets.filter(p => p.id !== id);
+
 
-    let currentRenameId = null;
-    let currentProfileToSave = null;
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
+
+
+            return true;
+
+
+        },
+
+
+    
+
+
+        // Export preset to JSON file
+
+
+        exportPreset(id) {
+
+
+            const preset = this.get(id);
+
+
+            if (!preset) return false;
+
+
+    
+
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(preset));
+
+
+            const downloadAnchorNode = document.createElement('a');
+
+
+            downloadAnchorNode.setAttribute("href", dataStr);
+
+
+            downloadAnchorNode.setAttribute("download", `${preset.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_preset.json`);
+
+
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+
+
+            downloadAnchorNode.click();
+
+
+            downloadAnchorNode.remove();
+
+
+            return true;
+
+
+        },
+
+
+    
+
+
+        // Import preset from JSON file
+
+
+        importPreset(file) {
+
+
+            return new Promise((resolve, reject) => {
+
+
+                const reader = new FileReader();
+
+
+                reader.onload = (e) => {
+
+
+                    try {
+
+
+                        const preset = JSON.parse(e.target.result);
+
+
+                        // Basic validation
+
+
+                        if (!preset.name || !preset.profile) {
+
+
+                            reject(new Error("Invalid preset file structure"));
+
+
+                            return;
+
+
+                        }
+
+
+                        
+
+
+                        // Generate new ID to avoid collisions
+
+
+                        preset.id = Date.now().toString();
+
+
+                        preset.createdAt = new Date().toISOString();
+
+
+                        
+
+
+                        this.save(preset);
+
+
+                        resolve(preset);
+
+
+                    } catch (error) {
+
+
+                        reject(error);
+
+
+                    }
+
+
+                };
+
+
+                reader.onerror = () => reject(new Error("Error reading file"));
+
+
+                reader.readAsText(file);
+
+
+            });
+
+
+        }
+
+
+    };
+
+
+    
+
+
+    // Initialize presets functionality
+
+
+    function initializePresets() {
+
+
+        const saveBtn = document.getElementById('save-preset-btn');
+
+
+        const presetModal = document.getElementById('preset-modal');
+
+
+        const presetNameInput = document.getElementById('preset-name-input');
+
+
+        const presetSaveConfirm = document.getElementById('preset-save-confirm');
+
+
+        const presetSaveCancel = document.getElementById('preset-save-cancel');
+
+
+    
+
+
+        const renameModal = document.getElementById('rename-modal');
+
+
+        const renameInput = document.getElementById('rename-input');
+
+
+        const renameConfirm = document.getElementById('rename-confirm');
+
+
+        const renameCancel = document.getElementById('rename-cancel');
+
+
+    
+
+
+        const loadPresetModal = document.getElementById('load-preset-modal');
+
+
+        const showPresetModalBtn = document.getElementById('show-preset-modal-btn');
+
+
+        const loadPresetCancel = document.getElementById('load-preset-cancel');
+
+
+        
+
+
+        // Import functionality
+
+
+        const importPresetBtn = document.getElementById('import-preset-btn');
+
+
+        const importPresetFile = document.getElementById('import-preset-file');
+
+
+    
+
+
+        if (importPresetBtn && importPresetFile) {
+
+
+            importPresetBtn.addEventListener('click', () => importPresetFile.click());
+
+
+            importPresetFile.addEventListener('change', async (e) => {
+
+
+                const file = e.target.files[0];
+
+
+                if (!file) return;
+
+
+    
+
+
+                try {
+
+
+                    await PresetManager.importPreset(file);
+
+
+                    showSuccess(`Preset imported successfully!`);
+
+
+                    displayPresetsList();
+
+
+                    // Clear input
+
+
+                    importPresetFile.value = '';
+
+
+                } catch (error) {
+
+
+                    showError(`Failed to import preset: ${error.message}`);
+
+
+                }
+
+
+            });
+
+
+        }
+
+
+    
+
+
+        let currentRenameId = null;
+
+
+        let currentProfileToSave = null;
+
+
+    
 
     // Display presets list on page load
     displayPresetsList();
@@ -1488,11 +1740,17 @@ function displayPresetsList() {
                 <div class="preset-name">${preset.name}</div>
                 <div class="preset-meta">${preset.tracksCount} tracks ÔÇó ${paramCount} parameters ÔÇó ${date}</div>
             </div>
-            <div class="preset-actions">
-                <button class="preset-btn load" onclick="loadPreset('${preset.id}')">­čôé LOAD</button>
-                <button class="preset-btn rename" onclick="showRenameModal('${preset.id}')">ÔťĆ´ŞĆ RENAME</button>
-                <button class="preset-btn delete" onclick="deletePreset('${preset.id}')">­čŚĹ´ŞĆ DELETE</button>
-            </div>
+                        <div class="preset-actions">
+
+                            <button class="preset-btn load" onclick="loadPreset('${preset.id}')">­čôé LOAD</button>
+
+                            <button class="preset-btn export" onclick="PresetManager.exportPreset('${preset.id}')">📤 EXPORT</button>
+
+                            <button class="preset-btn rename" onclick="showRenameModal('${preset.id}')">ÔťĆ´ŞĆ RENAME</button>
+
+                            <button class="preset-btn delete" onclick="deletePreset('${preset.id}')">­čŚĹ´ŞĆ DELETE</button>
+
+                        </div>
         `;
 
         container.appendChild(item);

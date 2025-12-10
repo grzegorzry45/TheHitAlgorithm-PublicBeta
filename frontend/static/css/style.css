@@ -1200,6 +1200,16 @@ body {
     border-color: #3d8b3d;
 }
 
+.preset-btn.export {
+    background: #1a1a4d;
+    border-color: #2d2d6b;
+}
+
+.preset-btn.export:hover {
+    background: #2d2d6b;
+    border-color: #3d3d8b;
+}
+
 .preset-btn.delete {
     background: #4d1a1a;
     border-color: #6b2d2d;
