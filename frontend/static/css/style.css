@@ -1238,7 +1238,7 @@ body {
 .modal-content {
     background: #0a0a0a;
     border: 2px solid #444;
-    border-radius: 8px;
+    border-radius: 0;
     padding: 30px;
     max-width: 500px;
     width: 90%;
