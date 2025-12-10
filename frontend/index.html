@@ -16,20 +16,27 @@
             <p class="subtitle">DECODE YOUR REFERENCE TRACKS (beta)</p>
             <p class="status">🎵Dive Deep Into Popular Songs</p>
         </div>
+        <div class="auth-buttons">
+            <button id="login-btn" class="btn btn-secondary">Login</button>
+            <button id="register-btn" class="btn btn-primary">Register</button>
+            <button id="logout-btn" class="btn btn-secondary" style="display: none;">Logout</button>
+        </div>
     </header>
 
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Tab Navigation -->
-        <nav class="tabs">
-            <button class="tab-btn" data-tab="analyze">🎵 Your Own Playlist</button>
-            <button class="tab-btn" data-tab="library">📚 Your Songs</button>
-            <button class="tab-btn active" data-tab="compare">⚖️ Compare Your Track</button>
-            <button class="tab-btn" data-tab="recommendations">✨ Recommendations</button>
-        </nav>
+    <!-- Main App Content (hidden until logged in) -->
+    <div id="main-app-content" style="display: none;">
+        <!-- Main Container -->
+        <div class="container">
+            <!-- Tab Navigation -->
+            <nav class="tabs">
+                <button class="tab-btn" data-tab="analyze">🎵 Your Own Playlist</button>
+                <button class="tab-btn" data-tab="library">📚 Your Songs</button>
+                <button class="tab-btn active" data-tab="compare">⚖️ Compare Your Track</button>
+                <button class="tab-btn" data-tab="recommendations">✨ Recommendations</button>
+            </nav>
 
-        <!-- Tab Content -->
-        <div class="tab-content-wrapper">
+            <!-- Tab Content -->
+            <div class="tab-content-wrapper">
 
             <!-- ANALYZE PLAYLIST TAB -->
             <div id="analyze-tab" class="tab-content">
@@ -417,6 +424,39 @@
     <div id="session-data" style="display: none;">
         <span id="session-id"></span>
         <span id="has-playlist-profile">false</span>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>🔑 Login</h3>
+            <div class="auth-form">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <p id="login-error" class="error-message"></p>
+                <div class="modal-buttons">
+                    <button id="login-confirm" class="btn btn-primary">LOGIN</button>
+                    <button id="login-cancel" class="btn btn-secondary">CANCEL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>📝 Register</h3>
+            <div class="auth-form">
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <input type="password" id="register-password-confirm" placeholder="Confirm Password" required>
+                <p id="register-error" class="error-message"></p>
+                <div class="modal-buttons">
+                    <button id="register-confirm" class="btn btn-primary">REGISTER</button>
+                    <button id="register-cancel" class="btn btn-secondary">CANCEL</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="/static/js/app.js?v=1765291100"></script>

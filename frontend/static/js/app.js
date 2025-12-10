@@ -2,6 +2,7 @@
 // Handles all UI interactions and API communication
 
 const API_BASE = '';  // Same origin
+let authToken = localStorage.getItem('access_token');
 let sessionId = null;
 let playlistFiles = [];
 let userTrackFiles = [];
@@ -22,15 +23,170 @@ let isProcessing = false;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    initializeTabs();
-    initializeParameterSelection();
-    initializePlaylistUpload();
-    initializeUserTracksUpload();
-    initializeSingleCompare();
-    initializeRecommendations();
-    initializeCancelButtons();
-    initializeUnloadWarning();
+    initializeAuthUI();
+    checkAuthAndRenderUI(); // Check auth status on page load
+
+    // These should only run if the user is logged in
+    if (authToken) {
+        initializeTabs();
+        initializeParameterSelection();
+        initializePlaylistUpload();
+        initializeUserTracksUpload();
+        initializeSingleCompare();
+        initializeRecommendations();
+        initializeCancelButtons();
+        initializeUnloadWarning();
+        initializePresets();
+        initializeCompareModeToggle();
+    }
 });
+
+// ===== AUTHENTICATION =====
+
+function getAuthHeaders(isJson = false) {
+    const headers = new Headers();
+    if (authToken) {
+        headers.append('Authorization', `Bearer ${authToken}`);
+    }
+    if (isJson) {
+        headers.append('Content-Type', 'application/json');
+    }
+    return headers;
+}
+
+function handleAuthError(response) {
+    if (response.status === 401) {
+        // Token is invalid or expired
+        showError("Your session has expired. Please log in again.");
+        logoutBtn.click(); // Programmatically trigger logout
+        return true;
+    }
+    return false;
+}
+
+function logout() {
+    localStorage.removeItem('access_token');
+    authToken = null;
+    checkAuthAndRenderUI();
+    window.location.reload(); 
+}
+
+function checkAuthAndRenderUI() {
+    authToken = localStorage.getItem('access_token');
+    const isLoggedIn = !!authToken;
+    updateUIForAuth(isLoggedIn);
+}
+
+function updateUIForAuth(isLoggedIn) {
+    const mainApp = document.getElementById('main-app-content');
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    if (isLoggedIn) {
+        mainApp.style.display = 'block';
+        loginBtn.style.display = 'none';
+        registerBtn.style.display = 'none';
+        logoutBtn.style.display = 'block';
+    } else {
+        mainApp.style.display = 'none';
+        loginBtn.style.display = 'block';
+        registerBtn.style.display = 'block';
+        logoutBtn.style.display = 'none';
+    }
+}
+
+function initializeAuthUI() {
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    const loginModal = document.getElementById('login-modal');
+    const registerModal = document.getElementById('register-modal');
+
+    const loginCancel = document.getElementById('login-cancel');
+    const registerCancel = document.getElementById('register-cancel');
+
+    const loginConfirm = document.getElementById('login-confirm');
+    const registerConfirm = document.getElementById('register-confirm');
+
+    loginBtn.addEventListener('click', () => loginModal.style.display = 'flex');
+    registerBtn.addEventListener('click', () => registerModal.style.display = 'flex');
+    
+    loginCancel.addEventListener('click', () => loginModal.style.display = 'none');
+    registerCancel.addEventListener('click', () => registerModal.style.display = 'none');
+
+    logoutBtn.addEventListener('click', logout);
+
+    // Handle Login
+    loginConfirm.addEventListener('click', async () => {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const errorEl = document.getElementById('login-error');
+        errorEl.textContent = '';
+
+        const formData = new FormData();
+        formData.append('username', email);
+        formData.append('password', password);
+
+        try {
+            const response = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('access_token', data.access_token);
+                authToken = data.access_token;
+                loginModal.style.display = 'none';
+                checkAuthAndRenderUI();
+                window.location.reload(); // Reload to re-initialize the app in a logged-in state
+            } else {
+                const errorData = await response.json();
+                errorEl.textContent = errorData.detail || 'Login failed. Please check your credentials.';
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            errorEl.textContent = 'An error occurred. Please try again.';
+        }
+    });
+
+    // Handle Registration
+    registerConfirm.addEventListener('click', async () => {
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const passwordConfirm = document.getElementById('register-password-confirm').value;
+        const errorEl = document.getElementById('register-error');
+        errorEl.textContent = '';
+
+        if (password !== passwordConfirm) {
+            errorEl.textContent = 'Passwords do not match.';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (response.ok) {
+                registerModal.style.display = 'none';
+                showSuccess('Registration successful! Please log in.');
+                loginModal.style.display = 'flex';
+            } else {
+                const errorData = await response.json();
+                errorEl.textContent = errorData.detail || 'Registration failed. Please try again.';
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            errorEl.textContent = 'An error occurred. Please try again.';
+        }
+    });
+}
+
 
 // Warn user before leaving page during processing
 function initializeUnloadWarning() {
@@ -274,9 +430,11 @@ async function analyzePlaylist() {
         const uploadResponse = await fetch(`${API_BASE}/api/upload/playlist`, {
             method: 'POST',
             body: formData,
+            headers: getAuthHeaders(),
             signal: playlistAbortController.signal
         });
 
+        if (handleAuthError(uploadResponse)) return;
         if (!uploadResponse.ok) {
             throw new Error('Upload failed');
         }
@@ -296,7 +454,7 @@ async function analyzePlaylist() {
 
         const analyzeResponse = await fetch(`${API_BASE}/api/analyze/playlist`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(true),
             body: JSON.stringify({
                 session_id: sessionId,
                 additional_params: selectedParams
@@ -304,6 +462,7 @@ async function analyzePlaylist() {
             signal: playlistAbortController.signal
         });
 
+        if (handleAuthError(analyzeResponse)) return;
         if (!analyzeResponse.ok) {
             throw new Error('Analysis failed');
         }
@@ -540,9 +699,11 @@ async function compareBatch() {
         const uploadResponse = await fetch(`${API_BASE}/api/upload/user-tracks?session_id=${sessionId}`, {
             method: 'POST',
             body: formData,
+            headers: getAuthHeaders(),
             signal: batchAbortController.signal
         });
 
+        if (handleAuthError(uploadResponse)) return;
         if (!uploadResponse.ok) {
             throw new Error('Upload failed');
         }
@@ -563,7 +724,7 @@ async function compareBatch() {
 
         const compareResponse = await fetch(`${API_BASE}/api/compare/batch`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(true),
             body: JSON.stringify({
                 session_id: sessionId,
                 additional_params: selectedParams
@@ -571,6 +732,7 @@ async function compareBatch() {
             signal: batchAbortController.signal
         });
 
+        if (handleAuthError(compareResponse)) return;
         if (!compareResponse.ok) {
             throw new Error('Comparison failed');
         }
@@ -723,8 +885,10 @@ async function compareSingleTrack() {
         try {
             const response = await fetch(`${API_BASE}/api/upload/playlist`, {
                 method: 'POST',
+                headers: getAuthHeaders(),
                 body: formData
             });
+            if (handleAuthError(response)) return;
             const data = await response.json();
             sessionId = data.session_id;
         } catch (error) {
@@ -796,9 +960,11 @@ async function compareSingleTrack() {
         const response = await fetch(`${API_BASE}/api/compare/single`, {
             method: 'POST',
             body: formData,
+            headers: getAuthHeaders(),
             signal: compareAbortController.signal
         });
 
+        if (handleAuthError(response)) return;
         if (!response.ok) {
             throw new Error('Comparison failed');
         }
@@ -1036,10 +1202,11 @@ async function generateReport() {
     try {
         const response = await fetch(`${API_BASE}/api/report/generate`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(true),
             body: JSON.stringify({ session_id: sessionId })
         });
 
+        if (handleAuthError(response)) return;
         if (!response.ok) {
             throw new Error('Report generation failed');
         }
@@ -1376,13 +1543,14 @@ window.loadPresetForCompare = async function(presetId) {
         // Create backend session with preset data
         const response = await fetch(`${API_BASE}/api/preset/load`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(true),
             body: JSON.stringify({
                 profile: preset.profile,
                 analysis: preset.analysis || []
             })
         });
 
+        if (handleAuthError(response)) return;
         if (!response.ok) {
             throw new Error('Failed to load preset in backend');
         }
