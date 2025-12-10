@@ -23,7 +23,7 @@ from core.track_comparator import TrackComparator
 from core.report_generator import ReportGenerator
 
 # Import database and models for authentication
-from . import models, database, schemas, auth # New import schemas and auth
+import models, database, schemas, auth # New import schemas and auth
 
 app = FastAPI(title="The Algorithm", description="Decode Spotify's DNA")
 
@@ -41,17 +41,9 @@ app.add_middleware(
 def on_startup():
     models.Base.metadata.create_all(bind=database.engine)
 
-# Dependency to get DB session
-def get_db(): # New function
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 # AUTHENTICATION ENDPOINTS
 @app.post("/auth/register", response_model=schemas.User)
-def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
     db_user = auth.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -65,7 +57,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/auth/login", response_model=schemas.Token)
 def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)
 ):
     user = auth.get_user_by_email(db, email=form_data.username)
     if not user or not auth.verify_password(form_data.password, user.hashed_password):

@@ -1,7 +1,11 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# SQLite databases
+*.db
+*.sqlite3
 *.so
 .Python
 build/

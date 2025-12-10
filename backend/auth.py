@@ -10,8 +10,8 @@ from fastapi.security import OAuth2PasswordBearer
 
 # For database interaction
 from sqlalchemy.orm import Session
-from . import models, schemas
-from .database import get_db
+import models, schemas
+from database import get_db
 
 # Configuration for JWT
 SECRET_KEY = os.environ.get("SECRET_KEY", "your-super-secret-key") # TODO: Use environment variable
