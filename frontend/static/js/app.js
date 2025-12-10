@@ -328,29 +328,85 @@ function displayPlaylistProfile(profile) {
     const container = document.getElementById('playlist-profile-data');
     container.innerHTML = '';
 
-    const params = [
-        { label: 'BPM', value: profile.bpm?.toFixed(1) },
-        { label: 'Energy', value: profile.energy?.toFixed(2) },
-        { label: 'Loudness', value: profile.loudness?.toFixed(1) + ' LUFS' },
-        { label: 'Brightness', value: profile.spectral_centroid?.toFixed(0) + ' Hz' },
-        { label: 'Dynamic Range', value: profile.dynamic_range?.toFixed(1) + ' dB' },
-        { label: 'Danceability', value: profile.danceability?.toFixed(2) },
-        { label: 'Low Energy', value: (profile.low_energy * 100)?.toFixed(1) + '%' },
-        { label: 'Mid Energy', value: (profile.mid_energy * 100)?.toFixed(1) + '%' },
-        { label: 'High Energy', value: (profile.high_energy * 100)?.toFixed(1) + '%' },
-    ];
+    // Complete parameter mapping with labels and formatters
+    const parameterMap = {
+        // Core parameters (always displayed first)
+        'bpm': { label: 'BPM', format: (v) => v.toFixed(1), order: 1 },
+        'energy': { label: 'Energy', format: (v) => v.toFixed(2), order: 2 },
+        'loudness': { label: 'Loudness', format: (v) => v.toFixed(1) + ' LUFS', order: 3 },
+        'spectral_centroid': { label: 'Brightness', format: (v) => v.toFixed(0) + ' Hz', order: 4 },
+        'dynamic_range': { label: 'Dynamic Range', format: (v) => v.toFixed(1) + ' dB', order: 5 },
 
-    params.forEach(param => {
-        if (param.value && param.value !== 'undefined' && param.value !== 'NaN') {
-            const item = document.createElement('div');
-            item.className = 'profile-item';
-            item.innerHTML = `
-                <div class="label">${param.label}</div>
-                <div class="value">${param.value}</div>
-            `;
-            container.appendChild(item);
+        // Tier 1: Spectral
+        'spectral_rolloff': { label: 'Spectral Rolloff', format: (v) => v.toFixed(0) + ' Hz', order: 10 },
+        'spectral_flatness': { label: 'Spectral Flatness', format: (v) => v.toFixed(3), order: 11 },
+        'zero_crossing_rate': { label: 'Zero Crossing Rate', format: (v) => v.toFixed(0), order: 12 },
+
+        // Tier 1B: Energy Distribution
+        'low_energy': { label: 'Low Energy', format: (v) => (v * 100).toFixed(1) + '%', order: 20 },
+        'mid_energy': { label: 'Mid Energy', format: (v) => (v * 100).toFixed(1) + '%', order: 21 },
+        'high_energy': { label: 'High Energy', format: (v) => (v * 100).toFixed(1) + '%', order: 22 },
+
+        // Tier 2: Perceptual
+        'danceability': { label: 'Danceability', format: (v) => v.toFixed(2), order: 30 },
+        'beat_strength': { label: 'Beat Strength', format: (v) => v.toFixed(2), order: 31 },
+        'sub_bass_presence': { label: 'Sub-Bass Presence', format: (v) => v.toFixed(2), order: 32 },
+        'stereo_width': { label: 'Stereo Width', format: (v) => v.toFixed(2), order: 33 },
+        'valence': { label: 'Valence (Mood)', format: (v) => v.toFixed(2), order: 34 },
+        'key_confidence': { label: 'Key Confidence', format: (v) => v.toFixed(2), order: 35 },
+
+        // Tier 3: Production
+        'loudness_range': { label: 'Loudness Range (LRA)', format: (v) => v.toFixed(1) + ' LU', order: 40 },
+        'true_peak': { label: 'True Peak', format: (v) => v.toFixed(1) + ' dBTP', order: 41 },
+        'crest_factor': { label: 'Crest Factor', format: (v) => v.toFixed(1) + ' dB', order: 42 },
+        'spectral_contrast': { label: 'Spectral Contrast', format: (v) => v.toFixed(2), order: 43 },
+        'transient_energy': { label: 'Transient Energy', format: (v) => v.toFixed(2), order: 44 },
+        'harmonic_to_noise_ratio': { label: 'Harmonic/Noise Ratio', format: (v) => v.toFixed(1) + ' dB', order: 45 },
+
+        // Tier 4: Compositional
+        'harmonic_complexity': { label: 'Harmonic Complexity', format: (v) => v.toFixed(2), order: 50 },
+        'melodic_range': { label: 'Melodic Range', format: (v) => v.toFixed(0) + ' semitones', order: 51 },
+        'rhythmic_density': { label: 'Rhythmic Density', format: (v) => v.toFixed(2), order: 52 },
+        'arrangement_density': { label: 'Arrangement Density', format: (v) => v.toFixed(2), order: 53 },
+        'repetition_score': { label: 'Repetition Score', format: (v) => v.toFixed(2), order: 54 },
+        'frequency_occupancy': { label: 'Frequency Occupancy', format: (v) => (v * 100).toFixed(1) + '%', order: 55 },
+        'timbral_diversity': { label: 'Timbral Diversity', format: (v) => v.toFixed(2), order: 56 },
+        'vocal_instrumental_ratio': { label: 'Vocal/Instrumental', format: (v) => v.toFixed(2), order: 57 },
+        'energy_curve': { label: 'Energy Curve', format: (v) => v.toFixed(2), order: 58 },
+        'call_response_presence': { label: 'Call-Response', format: (v) => v.toFixed(2), order: 59 }
+    };
+
+    // Collect all parameters that exist in profile
+    const paramsToDisplay = [];
+    Object.keys(profile).forEach(key => {
+        if (parameterMap[key] && typeof profile[key] === 'number' && !isNaN(profile[key]) && isFinite(profile[key])) {
+            paramsToDisplay.push({
+                key: key,
+                label: parameterMap[key].label,
+                value: parameterMap[key].format(profile[key]),
+                order: parameterMap[key].order
+            });
         }
     });
+
+    // Sort by order
+    paramsToDisplay.sort((a, b) => a.order - b.order);
+
+    // Display all parameters
+    paramsToDisplay.forEach(param => {
+        const item = document.createElement('div');
+        item.className = 'profile-item';
+        item.innerHTML = `
+            <div class="label">${param.label}</div>
+            <div class="value">${param.value}</div>
+        `;
+        container.appendChild(item);
+    });
+
+    // Show message if no parameters
+    if (paramsToDisplay.length === 0) {
+        container.innerHTML = '<p class="placeholder">No parameters available</p>';
+    }
 }
 
 // ===== USER TRACKS UPLOAD & BATCH COMPARISON =====

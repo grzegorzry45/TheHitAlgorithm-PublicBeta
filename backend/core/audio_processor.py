@@ -43,11 +43,21 @@ class AudioProcessor:
             y_stereo = None
 
             if fast_mode:
-                # Check if user specified custom parameters
+                # ALWAYS extract essential features first
+                print(f"DEBUG: Extracting ESSENTIAL parameters (always included)")
+                features = {
+                    'bpm': self.extract_bpm(y, sr),
+                    'energy': self.extract_energy(y),
+                    'loudness': self.extract_loudness(y),
+                    'spectral_centroid': self.extract_spectral_centroid(y, sr),
+                    'dynamic_range': self.extract_dynamic_range(y),
+                    'rms': self.extract_rms(y),
+                    'key': 'Unknown',  # Default value for fast mode
+                }
+
+                # Add additional parameters if specified
                 if additional_params and len(additional_params) > 0:
-                    # CUSTOM MODE: Use ONLY the requested parameters (no essential features)
-                    print(f"DEBUG: Using CUSTOM parameters ONLY: {additional_params}")
-                    features = {}
+                    print(f"DEBUG: Adding ADDITIONAL parameters: {additional_params}")
 
                     # Check if stereo is needed
                     stereo_params = ['stereo_width']
@@ -58,21 +68,9 @@ class AudioProcessor:
                         if y_stereo.ndim == 1:
                             y_stereo = np.array([y, y])
 
-                    # Extract ONLY the requested parameters
+                    # Extract additional parameters
                     for param in additional_params:
                         features.update(self._extract_param(param, y, sr, y_stereo, features))
-                else:
-                    # ESSENTIAL MODE: Default essential features for basic comparison (~5-10 seconds per track)
-                    print(f"DEBUG: Using ESSENTIAL parameters (default)")
-                    features = {
-                        'bpm': self.extract_bpm(y, sr),
-                        'energy': self.extract_energy(y),
-                        'loudness': self.extract_loudness(y),
-                        'spectral_centroid': self.extract_spectral_centroid(y, sr),
-                        'dynamic_range': self.extract_dynamic_range(y),
-                        'rms': self.extract_rms(y),
-                        'key': 'Unknown',  # Default value for fast mode
-                    }
 
                 return features
 
