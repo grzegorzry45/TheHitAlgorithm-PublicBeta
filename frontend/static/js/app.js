@@ -111,13 +111,32 @@ function initializeAuthUI() {
     const loginConfirm = document.getElementById('login-confirm');
     const registerConfirm = document.getElementById('register-confirm');
 
+    console.log("Elements check:", {
+        loginBtn: !!loginBtn,
+        loginModal: !!loginModal,
+        registerBtn: !!registerBtn,
+        registerModal: !!registerModal
+    });
+
     if(loginBtn) loginBtn.addEventListener('click', () => {
         console.log("Login button clicked");
-        if(loginModal) loginModal.style.display = 'flex';
+        if(loginModal) {
+            console.log("Opening Login Modal. Current display:", loginModal.style.display);
+            loginModal.style.display = 'flex';
+            // Force redraw/check
+            setTimeout(() => {
+                 console.log("Modal display after set:", getComputedStyle(loginModal).display);
+                 console.log("Modal z-index:", getComputedStyle(loginModal).zIndex);
+            }, 100);
+        } else {
+            console.error("Login modal element is missing!");
+        }
     });
     if(registerBtn) registerBtn.addEventListener('click', () => {
         console.log("Register button clicked");
-        if(registerModal) registerModal.style.display = 'flex';
+        if(registerModal) {
+            registerModal.style.display = 'flex';
+        }
     });
     
     if(loginCancel) loginCancel.addEventListener('click', () => loginModal.style.display = 'none');
