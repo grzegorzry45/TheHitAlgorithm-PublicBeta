@@ -1150,11 +1150,26 @@ function initializePresets() {
     const renameConfirm = document.getElementById('rename-confirm');
     const renameCancel = document.getElementById('rename-cancel');
 
+    const loadPresetModal = document.getElementById('load-preset-modal');
+    const showPresetModalBtn = document.getElementById('show-preset-modal-btn');
+    const loadPresetCancel = document.getElementById('load-preset-cancel');
+
     let currentRenameId = null;
     let currentProfileToSave = null;
 
     // Display presets list on page load
     displayPresetsList();
+
+    // Show load preset modal
+    showPresetModalBtn.addEventListener('click', () => {
+        displayComparePresetsList(); // Populate the list right before showing
+        loadPresetModal.style.display = 'flex';
+    });
+
+    // Hide load preset modal
+    loadPresetCancel.addEventListener('click', () => {
+        loadPresetModal.style.display = 'none';
+    });
 
     // Save preset button
     saveBtn.addEventListener('click', () => {
@@ -1204,7 +1219,6 @@ function initializePresets() {
 
         // Refresh both lists
         displayPresetsList();
-        displayComparePresetsList();
         showSuccess(`Preset "${name}" saved successfully!`);
     });
 
@@ -1219,6 +1233,7 @@ function initializePresets() {
         if (e.key === 'Escape') {
             presetModal.style.display = 'none';
             renameModal.style.display = 'none';
+            loadPresetModal.style.display = 'none';
             currentProfileToSave = null;
             currentRenameId = null;
         }
@@ -1237,7 +1252,6 @@ function initializePresets() {
             renameModal.style.display = 'none';
             currentRenameId = null;
             displayPresetsList();
-            displayComparePresetsList();
             showSuccess(`Preset renamed to "${newName}"`);
         }
     });
@@ -1296,7 +1310,7 @@ function displayPresetsList() {
 
 // Display presets list in Compare tab
 function displayComparePresetsList() {
-    const container = document.getElementById('compare-presets-list');
+    const container = document.getElementById('modal-presets-list');
     const presets = PresetManager.getAll();
 
     if (presets.length === 0) {
@@ -1392,6 +1406,9 @@ window.loadPresetForCompare = async function(presetId) {
         // Store active preset id
         window.activePresetId = preset.id;
         window.activePresetName = preset.name;
+
+        // Hide modal
+        document.getElementById('load-preset-modal').style.display = 'none';
 
         showSuccess(`Loaded preset: ${preset.name}`);
     } catch (error) {

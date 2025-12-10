@@ -22,9 +22,9 @@
     <div class="container">
         <!-- Tab Navigation -->
         <nav class="tabs">
-            <button class="tab-btn active" data-tab="analyze">🎵 Your Own Playlist</button>
+            <button class="tab-btn" data-tab="analyze">🎵 Your Own Playlist</button>
             <button class="tab-btn" data-tab="library">📚 Your Songs</button>
-            <button class="tab-btn" data-tab="compare">⚖️ Compare Your Track</button>
+            <button class="tab-btn active" data-tab="compare">⚖️ Compare Your Track</button>
             <button class="tab-btn" data-tab="recommendations">✨ Recommendations</button>
         </nav>
 
@@ -32,7 +32,7 @@
         <div class="tab-content-wrapper">
 
             <!-- ANALYZE PLAYLIST TAB -->
-            <div id="analyze-tab" class="tab-content active">
+            <div id="analyze-tab" class="tab-content">
                 <div class="section-header">
                     <h2>ANALYZE TARGET PLAYLIST</h2>
                     <p>Upload 2-30 tracks from your target playlist to create a sonic profile</p>
@@ -206,7 +206,7 @@
             </div>
 
             <!-- COMPARE TAB -->
-            <div id="compare-tab" class="tab-content">
+            <div id="compare-tab" class="tab-content active">
                 <div class="section-header">
                     <h2>SINGLE TRACK COMPARE</h2>
                     <p>Compare one track vs playlist or 1:1 track comparison</p>
@@ -227,9 +227,7 @@
                 <div class="presets-section" id="compare-presets-section">
                     <h3>📁 LOAD PLAYLIST PRESET</h3>
                     <p class="presets-hint">Load a saved playlist profile to compare your track against</p>
-                    <div id="compare-presets-list" class="presets-list">
-                        <p class="placeholder">No presets saved yet. Create some in the Analyze tab!</p>
-                    </div>
+                    <button id="show-preset-modal-btn" class="btn btn-primary">📂 Load Playlist Preset</button>
                     <div id="active-preset-info" class="active-preset-info" style="display: none;">
                         <span class="active-preset-label">Active Preset:</span>
                         <span class="active-preset-name" id="active-preset-name"></span>
@@ -396,6 +394,21 @@
             <div class="modal-buttons">
                 <button id="rename-confirm" class="btn btn-primary">SAVE</button>
                 <button id="rename-cancel" class="btn btn-secondary">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Preset Modal -->
+    <div id="load-preset-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>📂 Load Preset</h3>
+            <p>Select a saved playlist profile to load:</p>
+            <div id="modal-presets-list" class="presets-list modal-list">
+                <!-- Presets will be dynamically inserted here -->
+                <p class="placeholder">No presets saved yet.</p>
+            </div>
+            <div class="modal-buttons">
+                <button id="load-preset-cancel" class="btn btn-secondary">CANCEL</button>
             </div>
         </div>
     </div>
