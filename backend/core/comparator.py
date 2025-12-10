@@ -29,7 +29,8 @@ class Comparator:
 
     def compare_track(self, track_features: Dict) -> List[Dict]:
         """
-        Compare single track against target profile
+        Compare single track against target profile (DYNAMIC VERSION)
+        Only compares parameters that exist in both track and profile
 
         Args:
             track_features: Features of your track
@@ -44,53 +45,78 @@ class Comparator:
         recommendations.append({
             'status': self.get_score_status(score),
             'message': f"Overall match: {score}% compatible with target playlist",
-            'score': score
+            'score': score,
+            'parameter': 'Overall Score'
         })
 
-        # Core features
-        recommendations.append(self.compare_bpm(track_features['bpm']))
-        recommendations.append(self.compare_key(track_features.get('key', 'Unknown')))
-        recommendations.append(self.compare_energy(track_features['energy']))
-        recommendations.append(self.compare_loudness(track_features['loudness']))
+        # Define parameter metadata (labels and units)
+        param_metadata = {
+            # Core features
+            'bpm': {'name': 'BPM', 'unit': 'BPM'},
+            'energy': {'name': 'Energy', 'unit': ''},
+            'loudness': {'name': 'Loudness', 'unit': 'LUFS'},
+            'spectral_centroid': {'name': 'Brightness', 'unit': 'Hz'},
+            'rms': {'name': 'RMS Level', 'unit': ''},
 
-        # Spectral features
-        recommendations.append(self.compare_brightness(track_features['spectral_centroid']))
-        recommendations.append(self.compare_feature(track_features, 'spectral_rolloff', 'High-Freq Content', 'Hz'))
-        recommendations.append(self.compare_feature(track_features, 'spectral_flatness', 'Charakter dźwięku', ''))
-        recommendations.append(self.compare_feature(track_features, 'spectral_contrast', 'Klarowność spektrum', 'dB'))
+            # Tier 1: Spectral
+            'spectral_rolloff': {'name': 'High-Freq Content', 'unit': 'Hz'},
+            'spectral_flatness': {'name': 'Spectral Flatness', 'unit': ''},
+            'zero_crossing_rate': {'name': 'Zero Crossing Rate', 'unit': ''},
+            'spectral_contrast': {'name': 'Spectral Contrast', 'unit': 'dB'},
 
-        # Energy distribution
-        recommendations.append(self.compare_feature(track_features, 'low_energy', 'Basy', '%'))
-        recommendations.append(self.compare_feature(track_features, 'mid_energy', 'Środek', '%'))
-        recommendations.append(self.compare_feature(track_features, 'high_energy', 'Wysokie', '%'))
-        recommendations.append(self.compare_feature(track_features, 'sub_bass_presence', 'Sub-bass', '%'))
+            # Tier 1B: Energy Distribution
+            'low_energy': {'name': 'Low Energy', 'unit': '%'},
+            'mid_energy': {'name': 'Mid Energy', 'unit': '%'},
+            'high_energy': {'name': 'High Energy', 'unit': '%'},
+            'sub_bass_presence': {'name': 'Sub-Bass', 'unit': '%'},
 
-        # Dynamics & Loudness
-        recommendations.append(self.compare_feature(track_features, 'dynamic_range', 'Dynamika', 'dB'))
-        recommendations.append(self.compare_rms(track_features['rms']))
-        recommendations.append(self.compare_feature(track_features, 'loudness_range', 'Zakres głośności', 'LU'))
-        recommendations.append(self.compare_feature(track_features, 'true_peak', 'Peak level', 'dBTP'))
-        recommendations.append(self.compare_feature(track_features, 'crest_factor', 'Punchiness', 'dB'))
+            # Tier 2: Perceptual
+            'danceability': {'name': 'Danceability', 'unit': ''},
+            'beat_strength': {'name': 'Beat Strength', 'unit': ''},
+            'valence': {'name': 'Valence (Mood)', 'unit': ''},
+            'stereo_width': {'name': 'Stereo Width', 'unit': ''},
+            'key_confidence': {'name': 'Key Confidence', 'unit': ''},
 
-        # Perceptual features
-        recommendations.append(self.compare_feature(track_features, 'danceability', 'Taneczność', ''))
-        recommendations.append(self.compare_feature(track_features, 'beat_strength', 'Siła beatów', ''))
-        recommendations.append(self.compare_feature(track_features, 'valence', 'Nastrój', ''))
-        recommendations.append(self.compare_feature(track_features, 'stereo_width', 'Szerokość stereo', ''))
-        recommendations.append(self.compare_feature(track_features, 'transient_energy', 'Perkusyjność', '%'))
-        recommendations.append(self.compare_feature(track_features, 'harmonic_to_noise_ratio', 'Klarowność vs Szum', 'dB'))
+            # Tier 3: Production
+            'dynamic_range': {'name': 'Dynamic Range', 'unit': 'dB'},
+            'loudness_range': {'name': 'Loudness Range', 'unit': 'LU'},
+            'true_peak': {'name': 'True Peak', 'unit': 'dBTP'},
+            'crest_factor': {'name': 'Crest Factor', 'unit': 'dB'},
+            'transient_energy': {'name': 'Transient Energy', 'unit': '%'},
+            'harmonic_to_noise_ratio': {'name': 'Harmonic/Noise Ratio', 'unit': 'dB'},
 
-        # Composition & Arrangement
-        recommendations.append(self.compare_feature(track_features, 'harmonic_complexity', 'Złożoność harmoniczna', ''))
-        recommendations.append(self.compare_feature(track_features, 'melodic_range', 'Zakres melodyczny', 'semitony'))
-        recommendations.append(self.compare_feature(track_features, 'rhythmic_density', 'Gęstość rytmiczna', 'zdarz/s'))
-        recommendations.append(self.compare_feature(track_features, 'arrangement_density', 'Zmienność aranżacji', ''))
-        recommendations.append(self.compare_feature(track_features, 'repetition_score', 'Powtarzalność', ''))
-        recommendations.append(self.compare_feature(track_features, 'frequency_occupancy', 'Zajętość spektrum', 'Hz'))
-        recommendations.append(self.compare_feature(track_features, 'timbral_diversity', 'Różnorodność barw', ''))
-        recommendations.append(self.compare_feature(track_features, 'vocal_instrumental_ratio', 'Balans wokal/instrumental', ''))
-        recommendations.append(self.compare_feature(track_features, 'energy_curve', 'Zmienność energii', ''))
-        recommendations.append(self.compare_feature(track_features, 'call_response_presence', 'Call-Response', ''))
+            # Tier 4: Compositional
+            'harmonic_complexity': {'name': 'Harmonic Complexity', 'unit': ''},
+            'melodic_range': {'name': 'Melodic Range', 'unit': 'semitones'},
+            'rhythmic_density': {'name': 'Rhythmic Density', 'unit': 'events/s'},
+            'arrangement_density': {'name': 'Arrangement Density', 'unit': ''},
+            'repetition_score': {'name': 'Repetition Score', 'unit': ''},
+            'frequency_occupancy': {'name': 'Frequency Occupancy', 'unit': '%'},
+            'timbral_diversity': {'name': 'Timbral Diversity', 'unit': ''},
+            'vocal_instrumental_ratio': {'name': 'Vocal/Instrumental', 'unit': ''},
+            'energy_curve': {'name': 'Energy Curve', 'unit': ''},
+            'call_response_presence': {'name': 'Call-Response', 'unit': ''}
+        }
+
+        # Dynamically compare all parameters that exist in both track and profile
+        for param_key, metadata in param_metadata.items():
+            if param_key in track_features and param_key in self.target_profile:
+                rec = self.compare_feature(
+                    track_features,
+                    param_key,
+                    metadata['name'],
+                    metadata['unit']
+                )
+                rec['parameter'] = metadata['name']
+                recommendations.append(rec)
+
+        # Handle special case for key (string value)
+        if 'key' in track_features:
+            recommendations.append({
+                'status': 'good',
+                'message': f"Key: {track_features.get('key', 'Unknown')}",
+                'parameter': 'Key'
+            })
 
         return recommendations
 

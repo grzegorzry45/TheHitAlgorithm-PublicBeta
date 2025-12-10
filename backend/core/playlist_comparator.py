@@ -29,16 +29,20 @@ class PlaylistComparator:
 
         profile = {}
 
-        # Get all numeric parameters
-        params = [
-            'bpm', 'energy', 'loudness', 'spectral_centroid', 'rms',
-            'zero_crossing_rate', 'dynamic_range', 'spectral_rolloff',
-            'spectral_flatness', 'low_energy', 'mid_energy', 'high_energy',
-            'danceability', 'beat_strength', 'sub_bass_presence',
-            'stereo_width', 'valence', 'key_confidence'
-        ]
+        # Dynamically collect ALL numeric parameters from tracks
+        all_params = set()
+        for track in self.playlist_tracks:
+            for key, value in track.items():
+                # Skip non-numeric fields
+                if key in ['filename', 'key']:
+                    continue
+                # Check if it's a numeric value
+                if isinstance(value, (int, float)):
+                    all_params.add(key)
 
-        for param in params:
+        # Calculate mean and std for each parameter
+        # Use nested dict structure: {param: {'mean': x, 'std': y, 'min': z, 'max': w}}
+        for param in all_params:
             values = []
             for track in self.playlist_tracks:
                 if param in track and track[param] is not None:
@@ -48,8 +52,12 @@ class PlaylistComparator:
                         continue
 
             if values:
-                profile[param] = np.mean(values)
-                profile[f'{param}_std'] = np.std(values)
+                profile[param] = {
+                    'mean': np.mean(values),
+                    'std': np.std(values),
+                    'min': np.min(values),
+                    'max': np.max(values)
+                }
 
         return profile
 

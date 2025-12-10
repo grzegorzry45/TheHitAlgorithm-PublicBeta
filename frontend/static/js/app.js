@@ -404,13 +404,25 @@ function displayPlaylistProfile(profile) {
     // Collect all parameters that exist in profile
     const paramsToDisplay = [];
     Object.keys(profile).forEach(key => {
-        if (parameterMap[key] && typeof profile[key] === 'number' && !isNaN(profile[key]) && isFinite(profile[key])) {
-            paramsToDisplay.push({
-                key: key,
-                label: parameterMap[key].label,
-                value: parameterMap[key].format(profile[key]),
-                order: parameterMap[key].order
-            });
+        if (parameterMap[key]) {
+            // Handle nested structure: profile[key] = {mean: x, std: y, ...}
+            let value;
+            if (typeof profile[key] === 'object' && profile[key].mean !== undefined) {
+                value = profile[key].mean;
+            } else if (typeof profile[key] === 'number') {
+                value = profile[key];
+            } else {
+                return; // Skip if not a valid value
+            }
+
+            if (!isNaN(value) && isFinite(value)) {
+                paramsToDisplay.push({
+                    key: key,
+                    label: parameterMap[key].label,
+                    value: parameterMap[key].format(value),
+                    order: parameterMap[key].order
+                });
+            }
         }
     });
 
@@ -885,24 +897,38 @@ function displaySingleComparison(data) {
         'call_response_presence': { label: 'Call-Response', format: (v) => v.toFixed(2) }
     };
 
+    // Helper function to get value (handles both nested and flat structure)
+    const getValue = (obj, key) => {
+        if (obj[key] === undefined) return undefined;
+        // Handle nested structure (profile): {mean: x, std: y, ...}
+        if (typeof obj[key] === 'object' && obj[key].mean !== undefined) {
+            return obj[key].mean;
+        }
+        // Handle flat structure (track): just a number
+        return obj[key];
+    };
+
     // Find all numeric parameters that exist in both tracks
     const displayedParams = [];
 
     // First add the core parameters if they exist
     const coreOrder = ['bpm', 'energy', 'loudness', 'spectral_centroid', 'dynamic_range', 'danceability'];
     coreOrder.forEach(key => {
-        if (userTrack[key] !== undefined && refData[key] !== undefined && typeof userTrack[key] === 'number') {
+        const userVal = getValue(userTrack, key);
+        const refVal = getValue(refData, key);
+        if (userVal !== undefined && refVal !== undefined && typeof userVal === 'number' && typeof refVal === 'number') {
             displayedParams.push(key);
         }
     });
 
     // Then add all other parameters that exist in both tracks
     Object.keys(parameterMap).forEach(key => {
-        if (!coreOrder.includes(key) &&
-            userTrack[key] !== undefined &&
-            refData[key] !== undefined &&
-            typeof userTrack[key] === 'number') {
-            displayedParams.push(key);
+        if (!coreOrder.includes(key)) {
+            const userVal = getValue(userTrack, key);
+            const refVal = getValue(refData, key);
+            if (userVal !== undefined && refVal !== undefined && typeof userVal === 'number' && typeof refVal === 'number') {
+                displayedParams.push(key);
+            }
         }
     });
 
@@ -911,8 +937,8 @@ function displaySingleComparison(data) {
         const param = parameterMap[key];
         if (!param) return;
 
-        const userVal = userTrack[key];
-        const refVal = refData[key];
+        const userVal = getValue(userTrack, key);
+        const refVal = getValue(refData, key);
         const diff = userVal - refVal;
         const diffPercent = refVal !== 0 ? (diff / refVal * 100).toFixed(1) : '0.0';
 
