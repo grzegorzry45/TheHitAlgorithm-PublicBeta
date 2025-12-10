@@ -8,6 +8,10 @@ let userTrackFiles = [];
 let userSingleFile = null;
 let referenceFile = null;
 
+// Store current session data (for presets)
+let currentPlaylistProfile = null;
+let currentPlaylistAnalysis = null;
+
 // Abort controllers for cancelling operations
 let playlistAbortController = null;
 let batchAbortController = null;
@@ -322,6 +326,10 @@ async function analyzePlaylist() {
         updateProgressStage('playlist-progress-stages', 'complete', 'active');
         progressFill.style.width = '100%';
         progressText.textContent = 'Analysis complete!';
+
+        // Store profile for presets
+        currentPlaylistProfile = analyzeData.profile;
+        currentPlaylistAnalysis = analyzeData.playlist_analysis || [];
 
         // Show results
         displayPlaylistProfile(analyzeData.profile);
@@ -1081,3 +1089,248 @@ function showError(message) {
 function showSuccess(message) {
     console.log(message);
 }
+
+// ===== PRESETS MANAGEMENT =====
+const PresetManager = {
+    STORAGE_KEY: 'playlist_presets',
+
+    // Get all presets from localStorage
+    getAll() {
+        const data = localStorage.getItem(this.STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    },
+
+    // Save preset
+    save(preset) {
+        const presets = this.getAll();
+        preset.id = Date.now().toString();
+        preset.createdAt = new Date().toISOString();
+        presets.push(preset);
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(presets));
+        return preset.id;
+    },
+
+    // Get single preset by ID
+    get(id) {
+        const presets = this.getAll();
+        return presets.find(p => p.id === id);
+    },
+
+    // Update preset
+    update(id, updates) {
+        const presets = this.getAll();
+        const index = presets.findIndex(p => p.id === id);
+        if (index !== -1) {
+            presets[index] = { ...presets[index], ...updates };
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(presets));
+            return true;
+        }
+        return false;
+    },
+
+    // Delete preset
+    delete(id) {
+        const presets = this.getAll();
+        const filtered = presets.filter(p => p.id !== id);
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
+        return true;
+    }
+};
+
+// Initialize presets functionality
+function initializePresets() {
+    const saveBtn = document.getElementById('save-preset-btn');
+    const presetModal = document.getElementById('preset-modal');
+    const presetNameInput = document.getElementById('preset-name-input');
+    const presetSaveConfirm = document.getElementById('preset-save-confirm');
+    const presetSaveCancel = document.getElementById('preset-save-cancel');
+
+    const renameModal = document.getElementById('rename-modal');
+    const renameInput = document.getElementById('rename-input');
+    const renameConfirm = document.getElementById('rename-confirm');
+    const renameCancel = document.getElementById('rename-cancel');
+
+    let currentRenameId = null;
+    let currentProfileToSave = null;
+
+    // Display presets list on page load
+    displayPresetsList();
+
+    // Save preset button
+    saveBtn.addEventListener('click', () => {
+        // Get current session profile
+        if (!currentPlaylistProfile) {
+            showError('No playlist profile to save. Analyze a playlist first.');
+            return;
+        }
+
+        // Store profile temporarily
+        currentProfileToSave = {
+            profile: currentPlaylistProfile,
+            analysis: currentPlaylistAnalysis,
+            sessionId: sessionId
+        };
+
+        // Show modal
+        presetNameInput.value = '';
+        presetModal.style.display = 'flex';
+        presetNameInput.focus();
+    });
+
+    // Confirm save
+    presetSaveConfirm.addEventListener('click', () => {
+        const name = presetNameInput.value.trim();
+        if (!name) {
+            showError('Please enter a preset name');
+            return;
+        }
+
+        if (!currentProfileToSave) {
+            showError('No profile data to save');
+            return;
+        }
+
+        // Save to localStorage
+        const preset = {
+            name: name,
+            profile: currentProfileToSave.profile,
+            analysis: currentProfileToSave.analysis,
+            tracksCount: currentProfileToSave.analysis ? currentProfileToSave.analysis.length : 0
+        };
+
+        PresetManager.save(preset);
+        presetModal.style.display = 'none';
+        currentProfileToSave = null;
+
+        // Refresh list
+        displayPresetsList();
+        showSuccess(`Preset "${name}" saved successfully!`);
+    });
+
+    // Cancel save
+    presetSaveCancel.addEventListener('click', () => {
+        presetModal.style.display = 'none';
+        currentProfileToSave = null;
+    });
+
+    // Close modal on Escape
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            presetModal.style.display = 'none';
+            renameModal.style.display = 'none';
+            currentProfileToSave = null;
+            currentRenameId = null;
+        }
+    });
+
+    // Rename modal handlers
+    renameConfirm.addEventListener('click', () => {
+        const newName = renameInput.value.trim();
+        if (!newName) {
+            showError('Please enter a new name');
+            return;
+        }
+
+        if (currentRenameId) {
+            PresetManager.update(currentRenameId, { name: newName });
+            renameModal.style.display = 'none';
+            currentRenameId = null;
+            displayPresetsList();
+            showSuccess(`Preset renamed to "${newName}"`);
+        }
+    });
+
+    renameCancel.addEventListener('click', () => {
+        renameModal.style.display = 'none';
+        currentRenameId = null;
+    });
+
+    // Make rename modal accessible globally
+    window.showRenameModal = (presetId) => {
+        const preset = PresetManager.get(presetId);
+        if (preset) {
+            currentRenameId = presetId;
+            renameInput.value = preset.name;
+            renameModal.style.display = 'flex';
+            renameInput.focus();
+        }
+    };
+}
+
+// Display presets list
+function displayPresetsList() {
+    const container = document.getElementById('presets-list');
+    const presets = PresetManager.getAll();
+
+    if (presets.length === 0) {
+        container.innerHTML = '<p class="placeholder">No presets saved yet. Analyze a playlist and save it!</p>';
+        return;
+    }
+
+    container.innerHTML = '';
+
+    presets.forEach(preset => {
+        const item = document.createElement('div');
+        item.className = 'preset-item';
+
+        const date = new Date(preset.createdAt).toLocaleDateString();
+        const paramCount = preset.profile ? Object.keys(preset.profile).length : 0;
+
+        item.innerHTML = `
+            <div class="preset-info">
+                <div class="preset-name">${preset.name}</div>
+                <div class="preset-meta">${preset.tracksCount} tracks • ${paramCount} parameters • ${date}</div>
+            </div>
+            <div class="preset-actions">
+                <button class="preset-btn load" onclick="loadPreset('${preset.id}')">📂 LOAD</button>
+                <button class="preset-btn rename" onclick="showRenameModal('${preset.id}')">✏️ RENAME</button>
+                <button class="preset-btn delete" onclick="deletePreset('${preset.id}')">🗑️ DELETE</button>
+            </div>
+        `;
+
+        container.appendChild(item);
+    });
+}
+
+// Load preset
+window.loadPreset = function(presetId) {
+    const preset = PresetManager.get(presetId);
+    if (!preset) {
+        showError('Preset not found');
+        return;
+    }
+
+    // Load profile into current session
+    sessionId = 'preset_' + Date.now();
+    currentPlaylistProfile = preset.profile;
+    currentPlaylistAnalysis = preset.analysis || [];
+
+    document.getElementById('session-id').textContent = sessionId;
+    document.getElementById('has-playlist-profile').textContent = 'true';
+
+    // Display the profile
+    displayPlaylistProfile(preset.profile);
+    document.getElementById('playlist-results').style.display = 'block';
+
+    showSuccess(`Loaded preset: ${preset.name}`);
+};
+
+// Delete preset
+window.deletePreset = function(presetId) {
+    const preset = PresetManager.get(presetId);
+    if (!preset) {
+        showError('Preset not found');
+        return;
+    }
+
+    if (confirm(`Delete preset "${preset.name}"? This cannot be undone.`)) {
+        PresetManager.delete(presetId);
+        displayPresetsList();
+        showSuccess(`Preset "${preset.name}" deleted`);
+    }
+};
+
+// Initialize presets on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initializePresets();
+});

@@ -137,6 +137,19 @@
                 <div id="playlist-results" class="results-panel" style="display: none;">
                     <h3>PLAYLIST PROFILE</h3>
                     <div id="playlist-profile-data" class="profile-data"></div>
+
+                    <button id="save-preset-btn" class="btn btn-secondary">
+                        💾 SAVE AS PRESET
+                    </button>
+                </div>
+
+                <!-- PRESETS SECTION -->
+                <div class="presets-section">
+                    <h3>📁 SAVED PRESETS</h3>
+                    <p class="presets-hint">Save analyzed playlists as presets for quick comparison later</p>
+                    <div id="presets-list" class="presets-list">
+                        <p class="placeholder">No presets saved yet. Analyze a playlist and save it!</p>
+                    </div>
                 </div>
             </div>
 
@@ -344,6 +357,32 @@
                 </button>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Preset Name Modal -->
+    <div id="preset-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>💾 Save Preset</h3>
+            <p>Enter a name for this playlist profile:</p>
+            <input type="text" id="preset-name-input" placeholder="e.g., Top 40 Hits 2024" maxlength="50">
+            <div class="modal-buttons">
+                <button id="preset-save-confirm" class="btn btn-primary">SAVE</button>
+                <button id="preset-save-cancel" class="btn btn-secondary">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Preset Modal -->
+    <div id="rename-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>✏️ Rename Preset</h3>
+            <p>Enter new name:</p>
+            <input type="text" id="rename-input" placeholder="New preset name" maxlength="50">
+            <div class="modal-buttons">
+                <button id="rename-confirm" class="btn btn-primary">SAVE</button>
+                <button id="rename-cancel" class="btn btn-secondary">CANCEL</button>
+            </div>
         </div>
     </div>
 
