@@ -1202,8 +1202,9 @@ function initializePresets() {
         presetModal.style.display = 'none';
         currentProfileToSave = null;
 
-        // Refresh list
+        // Refresh both lists
         displayPresetsList();
+        displayComparePresetsList();
         showSuccess(`Preset "${name}" saved successfully!`);
     });
 
@@ -1236,6 +1237,7 @@ function initializePresets() {
             renameModal.style.display = 'none';
             currentRenameId = null;
             displayPresetsList();
+            displayComparePresetsList();
             showSuccess(`Preset renamed to "${newName}"`);
         }
     });
@@ -1292,7 +1294,40 @@ function displayPresetsList() {
     });
 }
 
-// Load preset
+// Display presets list in Compare tab
+function displayComparePresetsList() {
+    const container = document.getElementById('compare-presets-list');
+    const presets = PresetManager.getAll();
+
+    if (presets.length === 0) {
+        container.innerHTML = '<p class="placeholder">No presets saved yet. Create some in the Analyze tab!</p>';
+        return;
+    }
+
+    container.innerHTML = '';
+
+    presets.forEach(preset => {
+        const item = document.createElement('div');
+        item.className = 'preset-item';
+
+        const date = new Date(preset.createdAt).toLocaleDateString();
+        const paramCount = preset.profile ? Object.keys(preset.profile).length : 0;
+
+        item.innerHTML = `
+            <div class="preset-info">
+                <div class="preset-name">${preset.name}</div>
+                <div class="preset-meta">${preset.tracksCount} tracks • ${paramCount} parameters • ${date}</div>
+            </div>
+            <div class="preset-actions">
+                <button class="preset-btn load" onclick="loadPresetForCompare('${preset.id}')">📂 LOAD</button>
+            </div>
+        `;
+
+        container.appendChild(item);
+    });
+}
+
+// Load preset (for Analyze tab)
 window.loadPreset = function(presetId) {
     const preset = PresetManager.get(presetId);
     if (!preset) {
@@ -1315,6 +1350,50 @@ window.loadPreset = function(presetId) {
     showSuccess(`Loaded preset: ${preset.name}`);
 };
 
+// Load preset for Compare tab
+window.loadPresetForCompare = function(presetId) {
+    const preset = PresetManager.get(presetId);
+    if (!preset) {
+        showError('Preset not found');
+        return;
+    }
+
+    // Load profile into current session
+    sessionId = 'preset_' + Date.now();
+    currentPlaylistProfile = preset.profile;
+    currentPlaylistAnalysis = preset.analysis || [];
+
+    document.getElementById('session-id').textContent = sessionId;
+    document.getElementById('has-playlist-profile').textContent = 'true';
+
+    // Show active preset indicator
+    const activeInfo = document.getElementById('active-preset-info');
+    const activeName = document.getElementById('active-preset-name');
+    activeName.textContent = preset.name;
+    activeInfo.style.display = 'flex';
+
+    // Store active preset id
+    window.activePresetId = preset.id;
+    window.activePresetName = preset.name;
+
+    showSuccess(`Loaded preset: ${preset.name}`);
+};
+
+// Clear active preset
+window.clearActivePreset = function() {
+    sessionId = null;
+    currentPlaylistProfile = null;
+    currentPlaylistAnalysis = null;
+    window.activePresetId = null;
+    window.activePresetName = null;
+
+    document.getElementById('session-id').textContent = '';
+    document.getElementById('has-playlist-profile').textContent = 'false';
+    document.getElementById('active-preset-info').style.display = 'none';
+
+    showSuccess('Preset cleared');
+};
+
 // Delete preset
 window.deletePreset = function(presetId) {
     const preset = PresetManager.get(presetId);
@@ -1326,11 +1405,44 @@ window.deletePreset = function(presetId) {
     if (confirm(`Delete preset "${preset.name}"? This cannot be undone.`)) {
         PresetManager.delete(presetId);
         displayPresetsList();
+        displayComparePresetsList();
+
+        // Clear active preset if it was the deleted one
+        if (window.activePresetId === presetId) {
+            clearActivePreset();
+        }
+
         showSuccess(`Preset "${preset.name}" deleted`);
     }
 };
 
+// Initialize compare mode toggle
+function initializeCompareModeToggle() {
+    const modeRadios = document.querySelectorAll('input[name="compare-mode"]');
+    const presetsSection = document.getElementById('compare-presets-section');
+
+    modeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.value === 'playlist') {
+                // Show presets section
+                presetsSection.style.display = 'block';
+            } else {
+                // Hide presets section for 1:1 mode
+                presetsSection.style.display = 'none';
+            }
+        });
+    });
+
+    // Clear button handler
+    const clearBtn = document.getElementById('clear-preset-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearActivePreset);
+    }
+}
+
 // Initialize presets on page load
 document.addEventListener('DOMContentLoaded', () => {
     initializePresets();
+    displayComparePresetsList();
+    initializeCompareModeToggle();
 });
