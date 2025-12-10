@@ -121,31 +121,29 @@ function initializeAuthUI() {
     if(loginBtn) loginBtn.addEventListener('click', () => {
         console.log("Login button clicked");
         if(loginModal) {
-            console.log("Opening Login Modal. Current display:", loginModal.style.display);
-            
-            // EMERGENCY DEBUG STYLES
+            console.log("Opening Login Modal.");
+            console.log("Modal Parent:", loginModal.parentNode.tagName, loginModal.parentNode.id);
+            console.log("Modal InnerHTML Length:", loginModal.innerHTML.length);
+
+            // Move to body to ensure no parent clipping/hiding
+            if (loginModal.parentNode !== document.body) {
+                console.warn("Modal is not direct child of body! Moving it...");
+                document.body.appendChild(loginModal);
+            }
+
             loginModal.style.display = 'flex';
-            loginModal.style.visibility = 'visible';
-            loginModal.style.opacity = '1';
+            
+            // Force basic styles just in case
             loginModal.style.position = 'fixed';
-            loginModal.style.top = '0';
-            loginModal.style.left = '0';
-            loginModal.style.width = '100vw';
-            loginModal.style.height = '100vh';
-            loginModal.style.zIndex = '999999';
-            // loginModal.style.backgroundColor = 'rgba(255, 0, 0, 0.5)'; // Visual confirm test
+            loginModal.style.zIndex = '10000';
             
-            // Log geometry
-            const rect = loginModal.getBoundingClientRect();
-            console.log("Modal Geometry:", rect);
+            // Log geometry immediately and delayed
+            console.log("Geometry Immediate:", loginModal.getBoundingClientRect());
             
-            // Force redraw/check
             setTimeout(() => {
-                 console.log("Modal display after set:", getComputedStyle(loginModal).display);
-                 console.log("Modal z-index:", getComputedStyle(loginModal).zIndex);
+                 console.log("Geometry Delayed:", loginModal.getBoundingClientRect());
+                 console.log("Computed Display:", getComputedStyle(loginModal).display);
             }, 100);
-        } else {
-            console.error("Login modal element is missing!");
         }
     });
     if(registerBtn) registerBtn.addEventListener('click', () => {
