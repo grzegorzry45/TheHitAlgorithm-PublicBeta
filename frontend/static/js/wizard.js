@@ -83,8 +83,14 @@ function initializeReferenceSelection() {
         const selectBtn = card.querySelector('.select-reference-btn');
         const refType = card.dataset.reference;
 
+        // Click on button
         selectBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            selectReferenceType(refType);
+        });
+
+        // Click anywhere on card
+        card.addEventListener('click', () => {
             selectReferenceType(refType);
         });
     });
