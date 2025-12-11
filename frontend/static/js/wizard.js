@@ -96,6 +96,9 @@ function initializeReferenceSelection() {
 
     document.getElementById('analyze-playlist-btn')?.addEventListener('click', analyzePlaylist);
 
+    // Save preset button
+    document.getElementById('save-playlist-preset-btn')?.addEventListener('click', showSavePresetModal);
+
     // Preset loading
     document.getElementById('import-preset-wizard-btn')?.addEventListener('click', () => {
         document.getElementById('import-preset-wizard-file').click();
@@ -225,6 +228,7 @@ async function analyzePlaylist() {
 
         const analyzeData = await analyzeResponse.json();
         playlistProfile = analyzeData.profile;
+        playlistAnalysis = analyzeData.profile; // Store for preset saving
 
         progressFill.style.width = '100%';
         progressText.textContent = 'Analysis complete!';
@@ -233,9 +237,12 @@ async function analyzePlaylist() {
         referenceReady = true;
         document.getElementById('wizard-reference-ready').textContent = 'true';
 
+        // Display playlist profile
+        displayPlaylistProfile(playlistProfile);
+
         // Show success and enable next step
         setTimeout(() => {
-            showMessage('Playlist analyzed successfully! Proceed to Step 2 →', 'success');
+            showMessage('Playlist analyzed successfully! You can now save it as a preset or proceed to Step 2 →', 'success');
             enableStep2Navigation();
         }, 500);
 
@@ -267,6 +274,105 @@ async function confirmReferenceTrack() {
     referenceReady = true;
     document.getElementById('wizard-reference-ready').textContent = 'true';
     enableStep2Navigation();
+}
+
+function displayPlaylistProfile(profile) {
+    const resultsDiv = document.getElementById('playlist-results');
+    const profileDisplay = document.getElementById('playlist-profile-display');
+
+    if (!profile || !profileDisplay) return;
+
+    let html = '';
+    Object.entries(profile).forEach(([key, value]) => {
+        if (key !== 'filename' && typeof value === 'object' && value.mean !== undefined) {
+            html += `
+                <div class="param-row">
+                    <span class="param-name">${formatParamName(key)}</span>
+                    <span class="param-value">${value.mean.toFixed(2)} ±${value.std.toFixed(2)}</span>
+                </div>
+            `;
+        } else if (key !== 'filename' && typeof value !== 'object') {
+            html += `
+                <div class="param-row">
+                    <span class="param-name">${formatParamName(key)}</span>
+                    <span class="param-value">${typeof value === 'number' ? value.toFixed(2) : value}</span>
+                </div>
+            `;
+        }
+    });
+
+    profileDisplay.innerHTML = html;
+    resultsDiv.style.display = 'block';
+}
+
+function showSavePresetModal() {
+    const modal = document.getElementById('save-preset-modal');
+    const input = document.getElementById('preset-name-input-wizard');
+    const saveBtn = document.getElementById('preset-save-confirm-wizard');
+    const cancelBtn = document.getElementById('preset-save-cancel-wizard');
+
+    modal.style.display = 'flex';
+    input.value = '';
+    input.focus();
+
+    // Handle save
+    const handleSave = () => {
+        const name = input.value.trim();
+        if (!name) {
+            showMessage('Please enter a preset name', 'error');
+            return;
+        }
+
+        savePlaylistPreset(name);
+        modal.style.display = 'none';
+        saveBtn.removeEventListener('click', handleSave);
+        cancelBtn.removeEventListener('click', handleCancel);
+    };
+
+    // Handle cancel
+    const handleCancel = () => {
+        modal.style.display = 'none';
+        saveBtn.removeEventListener('click', handleSave);
+        cancelBtn.removeEventListener('click', handleCancel);
+    };
+
+    saveBtn.addEventListener('click', handleSave);
+    cancelBtn.addEventListener('click', handleCancel);
+
+    // Enter key to save
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSave();
+        }
+    });
+}
+
+function savePlaylistPreset(name) {
+    if (!playlistProfile || !playlistAnalysis) {
+        showMessage('No playlist data to save', 'error');
+        return;
+    }
+
+    const preset = {
+        name: name,
+        timestamp: Date.now(),
+        profile: playlistProfile,
+        analysis: playlistAnalysis
+    };
+
+    // Get existing presets
+    let presets = JSON.parse(localStorage.getItem('audio_presets') || '[]');
+
+    // Add new preset
+    presets.unshift(preset); // Add to beginning
+
+    // Save to localStorage
+    localStorage.setItem('audio_presets', JSON.stringify(presets));
+
+    showMessage(`Preset "${name}" saved successfully! ✓`, 'success');
+
+    // Refresh preset list if visible
+    renderPresetsInWizard();
 }
 
 function enableStep2Navigation() {

@@ -121,6 +121,15 @@
                     </div>
                     <p class="progress-text" id="playlist-progress-text">Processing...</p>
                 </div>
+
+                <!-- Playlist Results -->
+                <div id="playlist-results" class="results-summary" style="display: none; margin-top: 30px;">
+                    <h3>✓ Playlist Profile Created</h3>
+                    <div id="playlist-profile-display" class="param-comparison-grid"></div>
+                    <div style="margin-top: 25px; display: flex; gap: 15px;">
+                        <button id="save-playlist-preset-btn" class="btn btn-primary">💾 Save as Preset</button>
+                    </div>
+                </div>
             </div>
 
             <div id="preset-load-section" class="reference-upload-section" style="display: none;">
@@ -227,6 +236,19 @@
         <span id="session-id"></span>
         <span id="wizard-reference-type"></span>
         <span id="wizard-reference-ready">false</span>
+    </div>
+
+    <!-- Save Preset Modal -->
+    <div id="save-preset-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>💾 Save Playlist as Preset</h3>
+            <p>Enter a name for this playlist profile:</p>
+            <input type="text" id="preset-name-input-wizard" placeholder="e.g., Top 40 Hits 2024" maxlength="50">
+            <div class="modal-buttons">
+                <button id="preset-save-confirm-wizard" class="btn btn-primary">SAVE</button>
+                <button id="preset-save-cancel-wizard" class="btn btn-secondary">CANCEL</button>
+            </div>
+        </div>
     </div>
 
     <script src="/static/js/wizard.js?v=1"></script>
