@@ -41,8 +41,37 @@ function initializeWizard() {
     // Navigation
     initializeNavigation();
 
+    // Collapsible sections
+    initializeCollapsibleSections();
+
     // Load presets if any
     loadPresetsForWizard();
+}
+
+// ===== COLLAPSIBLE SECTIONS =====
+function initializeCollapsibleSections() {
+    const headers = document.querySelectorAll('.collapsible-header');
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const targetId = header.dataset.target;
+            const content = document.getElementById(targetId);
+            if (content) {
+                header.classList.toggle('active');
+                content.classList.toggle('collapsed');
+                // Update collapse icon
+                const icon = header.querySelector('.collapse-icon');
+                if (icon) {
+                    icon.textContent = header.classList.contains('active') ? '▼' : '▶';
+                }
+                // Adjust max-height for smooth transition
+                if (content.classList.contains('collapsed')) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            }
+        });
+    });
 }
 
 // ===== STEP 1: REFERENCE SELECTION =====
@@ -137,9 +166,8 @@ function handlePlaylistFiles(files) {
         });
     });
 
-    // Enable/disable analyze button
-    const analyzeBtn = document.getElementById('analyze-playlist-btn');
-    analyzeBtn.disabled = playlistFiles.length < 2 || playlistFiles.length > 30;
+    // Update analyze button state
+    updateAnalyzeButton();
 }
 
 async function analyzePlaylist() {
@@ -179,8 +207,8 @@ async function analyzePlaylist() {
         progressFill.style.width = '40%';
         progressText.textContent = 'Analyzing audio features...';
 
-        // Get selected parameters
-        const selectedParams = getSelectedParameters();
+        // Get selected parameters from playlist params
+        const selectedParams = getPlaylistParameters();
 
         // Analyze playlist
         const analyzeResponse = await fetch(`${API_BASE}/api/analyze/playlist`, {
@@ -267,9 +295,13 @@ function initializeUserTrackUpload() {
 
     document.getElementById('compare-now-btn')?.addEventListener('click', compareTrack);
 
-    // Quick select buttons
+    // Quick select buttons for Step 2
     document.getElementById('select-essential')?.addEventListener('click', selectEssentialParams);
     document.getElementById('select-all-params')?.addEventListener('click', selectAllParams);
+
+    // Quick select buttons for Playlist Analysis
+    document.getElementById('select-essential-playlist')?.addEventListener('click', selectEssentialPlaylistParams);
+    document.getElementById('select-all-params-playlist')?.addEventListener('click', selectAllPlaylistParams);
 }
 
 function handleUserTrack(files) {
@@ -495,9 +527,6 @@ function goToStep(stepNumber) {
 // ===== PARAMETER SELECTION =====
 
 function initializeParameterSelection() {
-    const paramGroups = document.getElementById('wizard-param-groups');
-
-    // Populate parameter groups (same as original)
     const params = {
         'Tier 1: Spectral (Fast)': ['spectral_rolloff', 'spectral_flatness', 'zero_crossing_rate'],
         'Tier 1B: Energy Distribution': ['low_energy', 'mid_energy', 'high_energy'],
@@ -506,21 +535,43 @@ function initializeParameterSelection() {
         'Tier 4: Compositional': ['harmonic_complexity', 'melodic_range', 'rhythmic_density', 'arrangement_density', 'repetition_score', 'frequency_occupancy', 'timbral_diversity', 'vocal_instrumental_ratio', 'energy_curve', 'call_response_presence']
     };
 
-    let html = '';
-    Object.entries(params).forEach(([group, paramList]) => {
-        html += `<div class="param-group"><h4>${group}</h4>`;
-        paramList.forEach(param => {
-            html += `<label><input type="checkbox" name="wizard-param" value="${param}"> ${formatParamName(param)}</label>`;
+    // Populate parameters for Step 2 (wizard-param-groups)
+    const wizardParamGroups = document.getElementById('wizard-param-groups');
+    if (wizardParamGroups) {
+        let html = '';
+        Object.entries(params).forEach(([group, paramList]) => {
+            html += `<div class="param-group"><h4>${group}</h4>`;
+            paramList.forEach(param => {
+                html += `<label><input type="checkbox" name="wizard-param" value="${param}"> ${formatParamName(param)}</label>`;
+            });
+            html += `</div>`;
         });
-        html += `</div>`;
-    });
+        wizardParamGroups.innerHTML = html;
 
-    paramGroups.innerHTML = html;
+        // Add change listeners
+        document.querySelectorAll('input[name="wizard-param"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateCompareButton);
+        });
+    }
 
-    // Add change listeners
-    document.querySelectorAll('input[name="wizard-param"]').forEach(checkbox => {
-        checkbox.addEventListener('change', updateCompareButton);
-    });
+    // Populate parameters for Playlist Analysis (playlist-param-groups)
+    const playlistParamGroups = document.getElementById('playlist-param-groups');
+    if (playlistParamGroups) {
+        let html = '';
+        Object.entries(params).forEach(([group, paramList]) => {
+            html += `<div class="param-group"><h4>${group}</h4>`;
+            paramList.forEach(param => {
+                html += `<label><input type="checkbox" name="playlist-param" value="${param}"> ${formatParamName(param)}</label>`;
+            });
+            html += `</div>`;
+        });
+        playlistParamGroups.innerHTML = html;
+
+        // Add change listeners to update analyze button
+        document.querySelectorAll('input[name="playlist-param"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateAnalyzeButton);
+        });
+    }
 }
 
 function getSelectedParameters() {
@@ -541,6 +592,35 @@ function selectAllParams() {
         cb.checked = true;
     });
     updateCompareButton();
+}
+
+function selectEssentialPlaylistParams() {
+    const essential = ['spectral_rolloff', 'low_energy', 'mid_energy', 'high_energy', 'danceability', 'beat_strength'];
+    document.querySelectorAll('input[name="playlist-param"]').forEach(cb => {
+        cb.checked = essential.includes(cb.value);
+    });
+    updateAnalyzeButton();
+}
+
+function selectAllPlaylistParams() {
+    document.querySelectorAll('input[name="playlist-param"]').forEach(cb => {
+        cb.checked = true;
+    });
+    updateAnalyzeButton();
+}
+
+function updateAnalyzeButton() {
+    const analyzeBtn = document.getElementById('analyze-playlist-btn');
+    const hasFiles = playlistFiles.length >= 2 && playlistFiles.length <= 30;
+    const hasParams = getPlaylistParameters().length > 0;
+    if (analyzeBtn) {
+        analyzeBtn.disabled = !(hasFiles && hasParams);
+    }
+}
+
+function getPlaylistParameters() {
+    const checkboxes = document.querySelectorAll('input[name="playlist-param"]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
 }
 
 // ===== PRESETS =====

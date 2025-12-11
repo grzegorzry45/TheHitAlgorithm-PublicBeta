@@ -94,6 +94,26 @@
                     <input type="file" id="playlist-files" multiple accept=".mp3,.wav,.flac" style="display: none;">
                 </div>
                 <div id="playlist-file-list" class="file-list"></div>
+
+                <!-- Parameter Selection for Playlist Analysis -->
+                <div class="parameter-selection-wizard" style="margin-top: 30px;">
+                    <h3 class="collapsible-header active" data-target="playlist-params-content">
+                        Select Analysis Parameters <span class="collapse-icon">▼</span>
+                    </h3>
+                    <div id="playlist-params-content" class="collapsible-content">
+                        <p class="param-hint">Choose which parameters to analyze. More parameters = longer analysis time (~5-80s per track).</p>
+
+                        <div class="param-quick-select">
+                            <button class="btn btn-secondary btn-small" id="select-essential-playlist">Essential Only (Fast)</button>
+                            <button class="btn btn-secondary btn-small" id="select-all-params-playlist">All Parameters (Thorough)</button>
+                        </div>
+
+                        <div class="param-groups" id="playlist-param-groups">
+                            <!-- Parameters will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
                 <button id="analyze-playlist-btn" class="btn btn-secondary" disabled>Analyze Playlist →</button>
                 <div id="playlist-progress" class="progress-container" style="display: none;">
                     <div class="progress-bar">
