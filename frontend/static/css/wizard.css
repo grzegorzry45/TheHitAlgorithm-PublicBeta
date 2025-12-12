@@ -632,3 +632,176 @@
     font-size: 14px;
     line-height: 1.6;
 }
+
+/* ===================================
+   COMPARISON TABLE (Side-by-side)
+   =================================== */
+
+.comparison-table {
+    width: 100%;
+    background: #1a1a1a;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.comparison-header {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 2fr;
+    gap: 1px;
+    background: #000;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.header-cell {
+    background: #2a2a2a;
+    padding: 16px 20px;
+    color: #fff;
+    text-align: center;
+}
+
+.param-name-header {
+    text-align: left;
+}
+
+.reference-header {
+    color: #00d4ff;
+}
+
+.user-header {
+    color: #1DB954;
+}
+
+.diff-header {
+    color: #ffa726;
+}
+
+.comparison-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.5fr 2fr;
+    gap: 1px;
+    background: #000;
+    transition: all 0.2s ease;
+}
+
+.comparison-row:hover {
+    background: #1DB954;
+}
+
+.comparison-row > div {
+    background: #1a1a1a;
+    padding: 14px 20px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.comparison-row:hover > div {
+    background: #222;
+}
+
+.param-name-cell {
+    color: #fff;
+    font-weight: 500;
+    justify-content: flex-start;
+}
+
+.reference-cell {
+    color: #00d4ff;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+}
+
+.user-cell {
+    color: #1DB954;
+    justify-content: center;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+}
+
+.diff-cell {
+    justify-content: center;
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+}
+
+.diff-higher {
+    color: #ff6b6b;
+}
+
+.diff-lower {
+    color: #4dabf7;
+}
+
+.diff-neutral {
+    color: #999;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+    .comparison-header,
+    .comparison-row {
+        grid-template-columns: 1.5fr 1fr 1fr 1.5fr;
+    }
+
+    .header-cell,
+    .comparison-row > div {
+        padding: 12px 10px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .comparison-header,
+    .comparison-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .comparison-row {
+        margin-bottom: 20px;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .header-cell {
+        display: none;
+    }
+
+    .comparison-row > div {
+        padding: 10px 15px;
+        justify-content: space-between;
+    }
+
+    .comparison-row > div::before {
+        font-weight: bold;
+        margin-right: 10px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .param-name-cell::before {
+        content: 'PARAM: ';
+        color: #888;
+    }
+
+    .reference-cell::before {
+        content: 'REF: ';
+        color: #00d4ff;
+    }
+
+    .user-cell::before {
+        content: 'YOU: ';
+        color: #1DB954;
+    }
+
+    .diff-cell::before {
+        content: 'DIFF: ';
+        color: #ffa726;
+    }
+}

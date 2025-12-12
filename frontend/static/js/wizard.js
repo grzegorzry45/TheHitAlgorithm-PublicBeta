@@ -290,10 +290,12 @@ function handleReferenceTrack(files) {
 async function confirmReferenceTrack() {
     if (!referenceTrackFile) return;
 
-    showMessage('Reference track confirmed! Proceed to Step 2 →', 'success');
     referenceReady = true;
     document.getElementById('wizard-reference-ready').textContent = 'true';
-    enableStep2Navigation();
+
+    // Automatically go to Step 2
+    showMessage('Reference confirmed! Now upload your track', 'success');
+    goToStep(2);
 }
 
 function displayPlaylistProfile(profile) {
@@ -471,11 +473,38 @@ async function compareTrack() {
     const progressText = document.getElementById('comparison-progress-text');
 
     progressContainer.style.display = 'block';
-    progressText.textContent = 'Analyzing your track...';
-    progressFill.style.width = '30%';
+
+    // Dynamic progress messages
+    const progressSteps = [
+        { progress: 10, message: '🎵 Loading audio file...' },
+        { progress: 20, message: '🔊 Extracting waveform data...' },
+        { progress: 30, message: '📊 Analyzing spectral content...' },
+        { progress: 45, message: '🎼 Detecting tempo & rhythm...' },
+        { progress: 60, message: '🎹 Analyzing harmonic structure...' },
+        { progress: 75, message: '⚡ Computing energy distribution...' },
+        { progress: 85, message: '🔍 Comparing with reference...' },
+        { progress: 95, message: '🤖 Generating AI recommendations...' },
+        { progress: 100, message: '✅ Analysis complete!' }
+    ];
+
+    let currentStep = 0;
+    let progressInterval = null;
+
+    // Function to update progress
+    const updateProgress = () => {
+        if (currentStep < progressSteps.length) {
+            const step = progressSteps[currentStep];
+            progressFill.style.width = step.progress + '%';
+            progressText.textContent = step.message;
+            currentStep++;
+        }
+    };
 
     try {
         abortController = new AbortController();
+
+        // Start initial progress
+        updateProgress();
 
         const selectedParams = getSelectedParameters();
         const formData = new FormData();
@@ -494,8 +523,8 @@ async function compareTrack() {
             formData.append('session_id', sessionId);
         }
 
-        progressFill.style.width = '60%';
-        progressText.textContent = 'Comparing parameters...';
+        // Start progress animation (update every 800ms)
+        progressInterval = setInterval(updateProgress, 800);
 
         const response = await fetch(`${API_BASE}/api/compare/single`, {
             method: 'POST',
@@ -503,12 +532,16 @@ async function compareTrack() {
             signal: abortController.signal
         });
 
+        // Clear interval and jump to completion
+        if (progressInterval) clearInterval(progressInterval);
+
         if (!response.ok) throw new Error('Comparison failed');
 
         const results = await response.json();
 
+        // Show final steps
         progressFill.style.width = '100%';
-        progressText.textContent = 'Complete!';
+        progressText.textContent = '✅ Analysis complete!';
 
         // Display results
         setTimeout(() => {
@@ -517,9 +550,11 @@ async function compareTrack() {
         }, 500);
 
     } catch (error) {
+        if (progressInterval) clearInterval(progressInterval);
         console.error('Comparison error:', error);
         showMessage('Comparison failed: ' + error.message, 'error');
         progressFill.style.width = '0%';
+        progressText.textContent = '';
     }
 }
 
@@ -534,16 +569,52 @@ function displayResults(results) {
     const summaryDiv = document.getElementById('comparison-summary');
     const recommendationsDiv = document.getElementById('ai-recommendations');
 
-    // Display comparison summary
+    // Display side-by-side comparison
     if (results.user_track) {
-        let summaryHTML = '<div class="param-comparison-grid">';
+        const userTrack = results.user_track;
+        const referenceData = results.reference_track || results.playlist_profile || {};
 
-        Object.entries(results.user_track).forEach(([key, value]) => {
-            if (key !== 'filename' && typeof value !== 'object') {
+        let summaryHTML = `
+            <div class="comparison-table">
+                <div class="comparison-header">
+                    <div class="header-cell param-name-header">Parameter</div>
+                    <div class="header-cell reference-header">Reference</div>
+                    <div class="header-cell user-header">Your Track</div>
+                    <div class="header-cell diff-header">Difference</div>
+                </div>
+        `;
+
+        Object.entries(userTrack).forEach(([key, userValue]) => {
+            if (key !== 'filename' && typeof userValue !== 'object') {
+                const refValue = referenceData[key];
+                const hasDiff = refValue !== undefined && refValue !== null;
+
+                // Calculate difference (if both are numbers)
+                let diffDisplay = '-';
+                let diffClass = 'diff-neutral';
+
+                if (hasDiff && typeof userValue === 'number' && typeof refValue === 'number') {
+                    const diff = userValue - refValue;
+                    const diffPercent = refValue !== 0 ? ((diff / refValue) * 100).toFixed(1) : 'N/A';
+
+                    if (Math.abs(diff) < 0.01) {
+                        diffDisplay = '≈ same';
+                        diffClass = 'diff-neutral';
+                    } else if (diff > 0) {
+                        diffDisplay = `+${diff.toFixed(2)} (${diffPercent}%)`;
+                        diffClass = 'diff-higher';
+                    } else {
+                        diffDisplay = `${diff.toFixed(2)} (${diffPercent}%)`;
+                        diffClass = 'diff-lower';
+                    }
+                }
+
                 summaryHTML += `
-                    <div class="param-row">
-                        <span class="param-name">${formatParamName(key)}</span>
-                        <span class="param-value">${formatValue(value)}</span>
+                    <div class="comparison-row">
+                        <div class="param-name-cell">${formatParamName(key)}</div>
+                        <div class="reference-cell">${hasDiff ? formatValue(refValue) : '-'}</div>
+                        <div class="user-cell">${formatValue(userValue)}</div>
+                        <div class="diff-cell ${diffClass}">${diffDisplay}</div>
                     </div>
                 `;
             }
