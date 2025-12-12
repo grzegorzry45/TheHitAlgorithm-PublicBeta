@@ -141,14 +141,25 @@ function selectReferenceType(type) {
         section.style.display = 'none';
     });
 
-    // Show appropriate upload section
+    // Show appropriate upload section and scroll to it
+    let uploadSection = null;
     if (type === 'playlist') {
-        document.getElementById('playlist-upload-section').style.display = 'block';
+        uploadSection = document.getElementById('playlist-upload-section');
+        uploadSection.style.display = 'block';
     } else if (type === 'preset') {
-        document.getElementById('preset-load-section').style.display = 'block';
+        uploadSection = document.getElementById('preset-load-section');
+        uploadSection.style.display = 'block';
         renderPresetsInWizard();
     } else if (type === 'single') {
-        document.getElementById('single-upload-section').style.display = 'block';
+        uploadSection = document.getElementById('single-upload-section');
+        uploadSection.style.display = 'block';
+    }
+
+    // Auto-scroll to the upload section
+    if (uploadSection) {
+        setTimeout(() => {
+            uploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100); // Small delay to ensure section is rendered
     }
 
     // Reset reference ready state
