@@ -249,11 +249,9 @@ async function analyzePlaylist() {
         // Display playlist profile
         displayPlaylistProfile(playlistProfile);
 
-        // Show success and enable next step
-        setTimeout(() => {
-            showMessage('Playlist analyzed successfully! You can now save it as a preset or proceed to Step 2 →', 'success');
-            enableStep2Navigation();
-        }, 500);
+        // Show success and enable next step immediately
+        showMessage('Playlist analyzed successfully! You can now save it as a preset or proceed to Step 2 →', 'success');
+        enableStep2Navigation();
 
     } catch (error) {
         if (error.name === 'AbortError') {
@@ -483,8 +481,8 @@ async function compareTrack() {
         { progress: 60, message: '🎹 Analyzing harmonic structure...' },
         { progress: 75, message: '⚡ Computing energy distribution...' },
         { progress: 85, message: '🔍 Comparing with reference...' },
-        { progress: 95, message: '🤖 Generating AI recommendations...' },
-        { progress: 100, message: '✅ Analysis complete!' }
+        { progress: 92, message: '🤖 Generating recommendations...' },
+        { progress: 96, message: '⏳ Almost complete...' }
     ];
 
     let currentStep = 0;
@@ -532,20 +530,19 @@ async function compareTrack() {
             signal: abortController.signal
         });
 
-        // Clear interval and jump to completion
+        // Clear interval - stops at ~96% "Almost complete..."
         if (progressInterval) clearInterval(progressInterval);
 
         if (!response.ok) throw new Error('Comparison failed');
 
         const results = await response.json();
 
-        // Show final steps
-        progressFill.style.width = '100%';
-        progressText.textContent = '✅ Analysis complete!';
-
-        // Display results immediately
+        // Immediately display results and transition (no "complete" message)
         displayResults(results);
         goToStep(3);
+
+        // Hide progress after transition
+        progressContainer.style.display = 'none';
 
     } catch (error) {
         if (progressInterval) clearInterval(progressInterval);
