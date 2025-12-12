@@ -53,10 +53,10 @@ class PlaylistComparator:
 
             if values:
                 profile[param] = {
-                    'mean': np.mean(values),
-                    'std': np.std(values),
-                    'min': np.min(values),
-                    'max': np.max(values)
+                    'mean': float(np.mean(values)),
+                    'std': float(np.std(values)),
+                    'min': float(np.min(values)),
+                    'max': float(np.max(values))
                 }
 
         return profile

@@ -157,7 +157,7 @@ class Comparator:
                         # Skip problematic values
                         continue
 
-        return round(np.mean(scores), 1) if scores else 0.0
+        return float(round(np.mean(scores), 1)) if scores else 0.0
 
     def get_score_status(self, score: float) -> str:
         """Get status based on score"""
