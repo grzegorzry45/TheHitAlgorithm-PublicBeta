@@ -599,6 +599,24 @@
     font-size: 12px;
 }
 
+.preset-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.preset-btn.delete {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #f44336;
+    padding: 5px 10px;
+    min-width: auto;
+}
+
+.preset-btn.delete:hover {
+    background: rgba(244, 67, 54, 0.2);
+    border-color: #f44336;
+}
+
 /* Collapsible Sections */
 .collapsible-header {
     cursor: pointer;

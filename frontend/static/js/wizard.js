@@ -1105,18 +1105,36 @@ function renderPresetsInWizard() {
                     <span class="preset-name">${preset.name}</span>
                     <span class="preset-date">${new Date(preset.timestamp).toLocaleDateString()}</span>
                 </div>
-                <button class="preset-btn load" data-index="${index}">Load</button>
+                <div class="preset-actions">
+                    <button class="preset-btn load" data-index="${index}">Load</button>
+                    <button class="preset-btn delete" data-index="${index}" title="Delete Preset">✕</button>
+                </div>
             </div>
         `;
     });
 
     listDiv.innerHTML = html;
 
-    // Add click handlers
+    // Add click handlers for LOAD
     listDiv.querySelectorAll('.preset-btn.load').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const index = e.target.dataset.index;
             loadPresetInWizard(presets[index]);
+        });
+    });
+
+    // Add click handlers for DELETE
+    listDiv.querySelectorAll('.preset-btn.delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm('Are you sure you want to delete this preset?')) {
+                const index = parseInt(e.target.dataset.index);
+                const currentPresets = loadPresetsForWizard();
+                currentPresets.splice(index, 1);
+                localStorage.setItem('audio_presets', JSON.stringify(currentPresets));
+                renderPresetsInWizard(); // Re-render list
+                showMessage('Preset deleted successfully.', 'success');
+            }
         });
     });
 }
