@@ -95,27 +95,35 @@ function initializeWizard() {
 
 // ===== COLLAPSIBLE SECTIONS =====
 function initializeCollapsibleSections() {
-    const headers = document.querySelectorAll('.collapsible-header');
-    headers.forEach(header => {
-        header.addEventListener('click', () => {
-            const targetId = header.dataset.target;
-            const content = document.getElementById(targetId);
-            if (content) {
-                header.classList.toggle('active');
-                content.classList.toggle('collapsed');
-                // Update collapse icon
-                const icon = header.querySelector('.collapse-icon');
-                if (icon) {
-                    icon.textContent = header.classList.contains('active') ? '▼' : '▶';
-                }
-                // Adjust max-height for smooth transition
-                if (content.classList.contains('collapsed')) {
-                    content.style.maxHeight = null;
-                } else {
-                    content.style.maxHeight = content.scrollHeight + "px";
-                }
+    // Use event delegation for robustness
+    document.addEventListener('click', (e) => {
+        const header = e.target.closest('.collapsible-header');
+        if (!header) return;
+
+        const targetId = header.dataset.target;
+        const content = document.getElementById(targetId);
+        
+        if (content) {
+            e.preventDefault(); // Prevent text selection or other defaults
+            
+            header.classList.toggle('active');
+            content.classList.toggle('collapsed');
+            
+            // Update collapse icon
+            const icon = header.querySelector('.collapse-icon');
+            if (icon) {
+                icon.textContent = header.classList.contains('active') ? '▼' : '▶';
             }
-        });
+            
+            // Adjust max-height
+            if (content.classList.contains('collapsed')) {
+                content.style.maxHeight = null;
+            } else {
+                // Ensure we get a value even if slightly off
+                const height = content.scrollHeight || 1000;
+                content.style.maxHeight = height + "px";
+            }
+        }
     });
 }
 
