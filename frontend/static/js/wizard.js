@@ -73,24 +73,30 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeWizard() {
-    // Step 1: Reference selection
-    initializeReferenceSelection();
+    console.log("Initializing Wizard...");
+    try {
+        // Step 1: Reference selection
+        initializeReferenceSelection();
 
-    // Step 2: User track upload
-    initializeUserTrackUpload();
-    initializeParameterSelection();
+        // Step 2: User track upload
+        initializeUserTrackUpload();
+        initializeParameterSelection();
 
-    // Step 3: Results
-    initializeResults();
+        // Step 3: Results
+        initializeResults();
 
-    // Navigation
-    initializeNavigation();
+        // Navigation
+        initializeNavigation();
 
-    // Collapsible sections
-    initializeCollapsibleSections();
+        // Collapsible sections
+        initializeCollapsibleSections();
 
-    // Load presets if any
-    loadPresetsForWizard();
+        // Load presets if any
+        loadPresetsForWizard();
+    } catch (error) {
+        console.error("Wizard initialization failed:", error);
+        alert("Wizard initialization failed. Please reload the page. Error: " + error.message);
+    }
 }
 
 // ===== COLLAPSIBLE SECTIONS =====
