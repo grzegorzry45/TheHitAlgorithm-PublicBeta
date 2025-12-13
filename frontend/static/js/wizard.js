@@ -1206,9 +1206,55 @@ function importPresetFile(file) {
     reader.onload = (e) => {
         try {
             const preset = JSON.parse(e.target.result);
+
+            // 1. Validation
+            if (!preset || typeof preset !== 'object') {
+                throw new Error('File content is not a valid JSON object');
+            }
+            
+            // Check for critical data
+            if (!preset.profile || Object.keys(preset.profile).length === 0) {
+                throw new Error('Preset is missing valid playlist profile data');
+            }
+
+            // Ensure name and ID exist
+            if (!preset.name) {
+                preset.name = file.name.replace(/\.json$/i, '');
+            }
+            
+            // Generate new ID if missing or collision risk (though we check duplicates)
+            if (!preset.id) {
+                preset.id = 'imported_' + Date.now();
+            }
+
+            // 2. Save to LocalStorage (if not already present)
+            const currentPresets = loadPresetsForWizard();
+            
+            // Check for duplicate ID
+            const index = currentPresets.findIndex(p => p.id === preset.id);
+            
+            if (index === -1) {
+                // Add new
+                currentPresets.push(preset);
+                localStorage.setItem('audio_presets', JSON.stringify(currentPresets));
+                
+                // 3. Refresh List UI
+                renderPresetsInWizard();
+                showMessage(`Preset "${preset.name}" imported and saved to list!`, 'success');
+            } else {
+                // Update existing? Or just notify. Let's just notify.
+                showMessage(`Preset "${preset.name}" updated in list.`, 'success');
+                currentPresets[index] = preset; // Update content just in case
+                localStorage.setItem('audio_presets', JSON.stringify(currentPresets));
+                renderPresetsInWizard();
+            }
+
+            // Load it into the wizard immediately
             loadPresetInWizard(preset);
+
         } catch (error) {
-            showMessage('Invalid preset file', 'error');
+            console.error('Import error:', error);
+            showMessage('Invalid preset file: ' + error.message, 'error');
         }
     };
     reader.readAsText(file);
