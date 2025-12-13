@@ -1,0 +1,957 @@
+================================================================================
+                   THE HIT ALGORITHM - CREDITS & COUPONS SYSTEM
+                              TECHNICAL DOCUMENTATION
+================================================================================
+
+Last Updated: 2025-12-13
+Version: 1.0
+Author: GRyba + Claude Sonnet 4.5
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. OVERVIEW
+2. CREDITS SYSTEM
+   2.1 How Credits Work
+   2.2 Credit Costs
+   2.3 Database Schema
+   2.4 Backend Implementation
+   2.5 Frontend Implementation
+3. COUPON SYSTEM
+   3.1 Coupon Types
+   3.2 Database Schema
+   3.3 Validation Rules
+   3.4 Backend Implementation
+   3.5 Frontend Implementation
+4. USER FLOWS
+5. API ENDPOINTS
+6. SECURITY & VALIDATION
+7. MONETIZATION MODEL
+8. TESTING GUIDE
+9. FUTURE ENHANCEMENTS
+
+================================================================================
+1. OVERVIEW
+================================================================================
+
+The Hit Algorithm uses a credit-based monetization system with coupon support.
+
+KEY PRINCIPLES:
+- Flat pricing: All analyses cost the same (100 credits)
+- Simple UX: Users see credits in header, pay per analysis
+- Flexible coupons: Single-use, multi-use, unlimited, with expiry
+- Audit trail: Every transaction logged for transparency
+
+BUSINESS MODEL:
+- Freemium: 1000 free credits on signup (10 analyses)
+- Pay-per-use: Users buy credit packages when they run out
+- Coupons: Marketing tool for acquisition, retention, partnerships
+
+================================================================================
+2. CREDITS SYSTEM
+================================================================================
+
+2.1 HOW CREDITS WORK
+--------------------
+
+STARTING BALANCE:
+- New users receive 1000 credits automatically on registration
+- Set in: backend/models.py → User.credits (default=1000)
+
+SPENDING:
+- Every analysis costs 100 credits (flat rate)
+- Deducted AFTER successful analysis (not before)
+- If analysis fails, credits are NOT deducted
+
+EARNING:
+- Signup bonus: 1000 credits
+- Coupon redemption: Variable (defined per coupon)
+- Future: Purchase packages via Stripe
+
+DISPLAY:
+- Header shows: "Credits: 1000 💎"
+- Updates in real-time after each action
+- Hidden when logged out
+
+
+2.2 CREDIT COSTS
+----------------
+
+ANALYSIS TYPE                   COST        RATIONALE
+------------------------------------------------------------------
+Playlist Analysis (2-30 tracks) 100 credits Simple, predictable
+Single Track Comparison         100 credits Same cost, no confusion
+1:1 Track Comparison            100 credits Flat pricing = better UX
+Load Preset                     0 credits   Already paid for playlist
+
+
+WHY FLAT PRICING?
+- Easier to understand ("100 credits = 1 analysis")
+- No analysis paralysis ("should I do playlist or single?")
+- Simpler marketing message
+- Higher perceived value
+
+
+2.3 DATABASE SCHEMA
+-------------------
+
+TABLE: users
+------------------------------------------------------------------
+id              INTEGER         Primary Key
+email           STRING          Unique, indexed
+hashed_password STRING          Bcrypt hashed
+is_active       BOOLEAN         Default: true
+credits         INTEGER         Default: 1000 ← ADDED
+created_at      DATETIME        Auto-generated
+updated_at      DATETIME        Auto-updated
+
+
+TABLE: credit_transactions
+------------------------------------------------------------------
+id              INTEGER         Primary Key
+user_id         INTEGER         Foreign Key → users.id
+amount          INTEGER         Can be negative (cost) or positive (add)
+transaction_type STRING         'signup_bonus', 'analysis_cost', 'coupon_redeemed', 'purchase'
+description     TEXT            Human-readable description
+created_at      DATETIME        Auto-generated
+
+EXAMPLE ROWS:
+id  user_id  amount  transaction_type    description
+1   42       1000    signup_bonus        "Signup bonus"
+2   42       -100    analysis_cost       "Playlist analysis: 20 tracks"
+3   42       5000    coupon_redeemed     "Redeemed coupon: BETA-TEST-2024"
+4   42       -100    analysis_cost       "Single comparison (1:1 mode): track.mp3 vs ref.mp3"
+
+
+2.4 BACKEND IMPLEMENTATION
+--------------------------
+
+FILE: backend/models.py
+------------------------------------------------------------------
+class User(Base):
+    credits = Column(Integer, default=1000)  # Start with 1000 credits
+    credit_transactions = relationship("CreditTransaction", back_populates="user")
+
+class CreditTransaction(Base):
+    user_id = Column(Integer, ForeignKey("users.id"))
+    amount = Column(Integer)  # Negative for costs, positive for additions
+    transaction_type = Column(String)
+    description = Column(Text, nullable=True)
+
+
+FILE: backend/main.py
+------------------------------------------------------------------
+CONSTANTS:
+ANALYSIS_COST = 100  # Cost per analysis
+
+HELPER FUNCTIONS:
+def check_credits(user: models.User, cost: int):
+    """Raises HTTPException 402 if insufficient credits"""
+    if user.credits < cost:
+        raise HTTPException(status_code=402, detail=f"Not enough credits")
+
+def deduct_credits(user: models.User, cost: int, db: Session, description: str):
+    """Deduct credits and log transaction"""
+    user.credits -= cost
+    transaction = models.CreditTransaction(
+        user_id=user.id,
+        amount=-cost,
+        transaction_type="analysis_cost",
+        description=description
+    )
+    db.add(transaction)
+    db.commit()
+
+
+ANALYSIS ENDPOINT PATTERN:
+@app.post("/api/analyze/playlist")
+async def analyze_playlist(..., db: Session = Depends(database.get_db)):
+    # 1. Validate input
+    # 2. CHECK CREDITS (before processing)
+    check_credits(current_user, ANALYSIS_COST)
+
+    # 3. Perform analysis (CPU intensive)
+    results = do_analysis(...)
+
+    # 4. DEDUCT CREDITS (after success)
+    deduct_credits(current_user, ANALYSIS_COST, db, "Playlist analysis: 20 tracks")
+
+    # 5. Return results + remaining credits
+    return {
+        "results": results,
+        "credits_remaining": current_user.credits  # Frontend updates display
+    }
+
+
+WHY DEDUCT AFTER SUCCESS?
+- User doesn't lose credits if analysis fails (better UX)
+- Prevents charging for errors/crashes
+- Atomic transaction: analysis + deduction together
+
+
+2.5 FRONTEND IMPLEMENTATION
+---------------------------
+
+FILE: frontend/index-wizard.html
+------------------------------------------------------------------
+HEADER DISPLAY:
+<div id="credits-display" style="display: none;">
+    <div>Credits</div>
+    <div><span id="credits-amount">1000</span> 💎</div>
+    <button id="add-credits-btn">+ Add Credits</button>
+</div>
+
+- Shows only when logged in
+- Updates in real-time
+- "Add Credits" opens coupon modal
+
+
+FILE: frontend/static/js/wizard.js
+------------------------------------------------------------------
+FETCH CREDITS FROM API:
+async function fetchCredits() {
+    const response = await fetch('/api/credits/balance', {
+        headers: getAuthHeaders()
+    });
+    const data = await response.json();
+    updateCreditsDisplay(data.credits);
+}
+
+UPDATE DISPLAY:
+function updateCreditsDisplay(credits) {
+    document.getElementById('credits-amount').textContent = credits;
+    document.getElementById('credits-display').style.display = 'block';
+}
+
+WHEN TO FETCH/UPDATE:
+1. On login → fetchCredits()
+2. After each analysis → updateCreditsDisplay(response.credits_remaining)
+3. After coupon redemption → updateCreditsDisplay(response.new_balance)
+
+
+================================================================================
+3. COUPON SYSTEM
+================================================================================
+
+3.1 COUPON TYPES
+----------------
+
+TYPE 1: SINGLE-USE (Personal beta codes)
+------------------------------------------------------------------
+code:       "BETA-ADAM-X7K2"
+credits:    5000
+max_uses:   1
+expires_at: "2025-12-31"
+description: "Beta tester: Adam"
+
+USE CASE: Give specific users unlimited access for testing
+
+
+TYPE 2: MULTI-USE (Group/campaign codes)
+------------------------------------------------------------------
+code:       "BETATEST500"
+credits:    2000
+max_uses:   50
+expires_at: "2025-06-30"
+description: "Beta testing group"
+
+USE CASE: Share on Discord, social media, limited availability
+
+
+TYPE 3: UNLIMITED (Evergreen marketing)
+------------------------------------------------------------------
+code:       "WELCOME2025"
+credits:    500
+max_uses:   NULL (unlimited)
+expires_at: NULL (never expires)
+description: "Welcome bonus"
+
+USE CASE: Landing page, permanent offer for new users
+
+
+TYPE 4: TIME-LIMITED (Promotions)
+------------------------------------------------------------------
+code:       "WEEKEND2024"
+credits:    1500
+max_uses:   200
+expires_at: "2025-12-15" (3 days from now)
+description: "Weekend special"
+
+USE CASE: Flash sales, holiday promotions
+
+
+3.2 DATABASE SCHEMA
+-------------------
+
+TABLE: coupons
+------------------------------------------------------------------
+id              INTEGER         Primary Key
+code            STRING(50)      Unique, indexed, uppercase
+credits         INTEGER         How many credits this coupon gives
+max_uses        INTEGER         NULL = unlimited, else max redemptions
+current_uses    INTEGER         Default: 0, increments on redemption
+expires_at      DATETIME        NULL = never expires
+is_active       BOOLEAN         Default: true (can deactivate without deleting)
+description     TEXT            Admin notes
+created_at      DATETIME        Auto-generated
+
+EXAMPLE ROWS:
+code                credits  max_uses  current_uses  expires_at           is_active
+BETA-ADAM-X7K2      5000     1         0             2025-12-31 23:59:59  true
+BETATEST500         2000     50        23            2025-06-30 23:59:59  true
+WELCOME2025         500      NULL      1547          NULL                 true
+
+
+TABLE: coupon_redemptions
+------------------------------------------------------------------
+id              INTEGER         Primary Key
+coupon_id       INTEGER         Foreign Key → coupons.id
+user_id         INTEGER         Foreign Key → users.id
+credits_added   INTEGER         Snapshot of credits received
+redeemed_at     DATETIME        Auto-generated
+
+UNIQUE CONSTRAINT: (coupon_id, user_id)
+- Prevents same user from using same coupon twice
+
+
+EXAMPLE ROWS:
+id  coupon_id  user_id  credits_added  redeemed_at
+1   5          42       5000           2025-12-13 10:23:45
+2   7          42       500            2025-12-13 11:05:12
+3   5          99       5000           2025-12-13 14:30:00
+
+
+3.3 VALIDATION RULES
+--------------------
+
+RULE 1: Valid Code
+- Code must exist in database
+- Error: "Invalid coupon code"
+
+RULE 2: Is Active
+- coupon.is_active must be true
+- Error: "This coupon is no longer active"
+
+RULE 3: Not Expired
+- If coupon.expires_at is set, must be > now()
+- Error: "This coupon has expired"
+
+RULE 4: Not Over Max Uses
+- If coupon.max_uses is set, current_uses must be < max_uses
+- Error: "This coupon has been fully redeemed"
+
+RULE 5: User Hasn't Used It
+- Check coupon_redemptions for (coupon_id, user_id)
+- Error: "You have already used this coupon"
+
+ALL RULES MUST PASS BEFORE REDEMPTION
+
+
+3.4 BACKEND IMPLEMENTATION
+--------------------------
+
+FILE: backend/models.py
+------------------------------------------------------------------
+class Coupon(Base):
+    code = Column(String(50), unique=True, index=True)
+    credits = Column(Integer)
+    max_uses = Column(Integer, nullable=True)
+    current_uses = Column(Integer, default=0)
+    expires_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+
+class CouponRedemption(Base):
+    __table_args__ = (UniqueConstraint('coupon_id', 'user_id'),)
+    coupon_id = Column(Integer, ForeignKey("coupons.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    credits_added = Column(Integer)
+
+
+FILE: backend/main.py
+------------------------------------------------------------------
+@app.post("/api/credits/redeem")
+async def redeem_coupon(request, current_user, db):
+    code = request.code.upper().strip()
+
+    # Find coupon
+    coupon = db.query(Coupon).filter(Coupon.code == code).first()
+    if not coupon:
+        raise HTTPException(404, "Invalid coupon code")
+
+    # Validate: Is active?
+    if not coupon.is_active:
+        raise HTTPException(400, "This coupon is no longer active")
+
+    # Validate: Not expired?
+    if coupon.expires_at and coupon.expires_at < datetime.utcnow():
+        raise HTTPException(400, "This coupon has expired")
+
+    # Validate: Not over max uses?
+    if coupon.max_uses and coupon.current_uses >= coupon.max_uses:
+        raise HTTPException(400, "This coupon has been fully redeemed")
+
+    # Validate: User hasn't used it?
+    existing = db.query(CouponRedemption).filter(
+        CouponRedemption.coupon_id == coupon.id,
+        CouponRedemption.user_id == current_user.id
+    ).first()
+    if existing:
+        raise HTTPException(400, "You have already used this coupon")
+
+    # ALL CHECKS PASSED - Add credits
+    current_user.credits += coupon.credits
+    coupon.current_uses += 1
+
+    # Log redemption
+    redemption = CouponRedemption(
+        coupon_id=coupon.id,
+        user_id=current_user.id,
+        credits_added=coupon.credits
+    )
+    db.add(redemption)
+
+    # Log transaction
+    transaction = CreditTransaction(
+        user_id=current_user.id,
+        amount=coupon.credits,
+        transaction_type="coupon_redeemed",
+        description=f"Redeemed coupon: {coupon.code}"
+    )
+    db.add(transaction)
+
+    db.commit()
+    db.refresh(current_user)
+
+    return {
+        "success": True,
+        "credits_added": coupon.credits,
+        "new_balance": current_user.credits,
+        "message": f"Success! Added {coupon.credits} credits to your account"
+    }
+
+
+3.5 FRONTEND IMPLEMENTATION
+---------------------------
+
+FILE: frontend/index-wizard.html
+------------------------------------------------------------------
+COUPON MODAL:
+<div id="coupon-modal" class="modal">
+    <h3>🎁 Redeem Coupon Code</h3>
+    <input id="coupon-code-input" placeholder="Enter coupon code"
+           style="text-transform: uppercase; letter-spacing: 2px;">
+    <p id="coupon-message"></p>
+    <button id="redeem-coupon-btn">REDEEM CODE</button>
+    <button id="coupon-cancel-btn">CANCEL</button>
+</div>
+
+
+FILE: frontend/static/js/wizard.js
+------------------------------------------------------------------
+REDEEM LOGIC:
+document.getElementById('redeem-coupon-btn').addEventListener('click', async () => {
+    const code = document.getElementById('coupon-code-input').value.trim();
+
+    const response = await fetch('/api/credits/redeem', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ code: code.toUpperCase() })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        // Success!
+        showCouponMessage(data.message, 'success');
+        updateCreditsDisplay(data.new_balance);
+        setTimeout(() => closeModal(), 2000);
+    } else {
+        // Error
+        showCouponMessage(data.detail, 'error');
+    }
+});
+
+UX FLOW:
+1. User clicks "+ Add Credits" in header
+2. Modal opens with input field
+3. User types code (auto-uppercase)
+4. Click "REDEEM CODE"
+5. Frontend sends POST to /api/credits/redeem
+6. If success: Green message "Success! Added 1000 credits"
+7. Credits display updates (e.g., 1000 → 2000)
+8. Modal auto-closes after 2s
+9. If error: Red message "You have already used this coupon"
+
+
+================================================================================
+4. USER FLOWS
+================================================================================
+
+FLOW 1: NEW USER REGISTRATION
+------------------------------------------------------------------
+1. User visits landing page
+2. Clicks "Register"
+3. Enters email + password
+4. POST /auth/register
+5. Backend creates User with credits=1000 (default)
+6. User logged in automatically
+7. Header shows: "Credits: 1000 💎"
+
+
+FLOW 2: FIRST ANALYSIS
+------------------------------------------------------------------
+1. User has 1000 credits
+2. Uploads playlist (20 tracks)
+3. Clicks "Analyze Playlist"
+4. Frontend shows progress modal
+5. POST /api/analyze/playlist
+6. Backend checks: 1000 >= 100? ✓ Yes
+7. Analysis runs (~60s)
+8. Analysis completes successfully
+9. Backend deducts: 1000 - 100 = 900
+10. Backend logs transaction: -100 "Playlist analysis: 20 tracks"
+11. Response: { profile: {...}, credits_remaining: 900 }
+12. Frontend updates: "Credits: 900 💎"
+
+
+FLOW 3: RUNNING OUT OF CREDITS
+------------------------------------------------------------------
+1. User has 50 credits left
+2. Tries to analyze (costs 100)
+3. POST /api/analyze/playlist
+4. Backend checks: 50 >= 100? ✗ No
+5. Raises HTTPException(402, "Not enough credits. Need 100, have 50")
+6. Frontend shows error message
+7. User clicks "+ Add Credits"
+8. Coupon modal opens
+
+
+FLOW 4: REDEEMING COUPON
+------------------------------------------------------------------
+1. User clicks "+ Add Credits"
+2. Modal opens
+3. User enters: "BETA-TEST-2024"
+4. Clicks "REDEEM CODE"
+5. POST /api/credits/redeem with { code: "BETA-TEST-2024" }
+6. Backend validates (see 3.3 Validation Rules)
+7. All checks pass
+8. Backend adds: 50 + 5000 = 5050 credits
+9. Backend increments coupon.current_uses
+10. Backend creates CouponRedemption record
+11. Backend logs transaction: +5000 "Redeemed coupon: BETA-TEST-2024"
+12. Response: { credits_added: 5000, new_balance: 5050 }
+13. Frontend shows: "Success! Added 5000 credits to your account"
+14. Header updates: "Credits: 5050 💎"
+15. Modal closes after 2s
+
+
+FLOW 5: TRYING TO USE SAME COUPON TWICE
+------------------------------------------------------------------
+1. User already used "WELCOME2025"
+2. Tries to use it again
+3. POST /api/credits/redeem with { code: "WELCOME2025" }
+4. Backend checks coupon_redemptions table
+5. Finds existing record: (coupon_id=7, user_id=42)
+6. Raises HTTPException(400, "You have already used this coupon")
+7. Frontend shows red message: "You have already used this coupon"
+8. Credits unchanged
+
+
+================================================================================
+5. API ENDPOINTS
+================================================================================
+
+GET /api/credits/balance
+------------------------------------------------------------------
+AUTH: Required (Bearer token)
+DESCRIPTION: Get current user's credit balance
+
+REQUEST:
+GET /api/credits/balance
+Headers:
+  Authorization: Bearer eyJhbGc...
+
+RESPONSE (200):
+{
+  "credits": 1000
+}
+
+
+POST /api/credits/redeem
+------------------------------------------------------------------
+AUTH: Required (Bearer token)
+DESCRIPTION: Redeem a coupon code to add credits
+
+REQUEST:
+POST /api/credits/redeem
+Headers:
+  Authorization: Bearer eyJhbGc...
+  Content-Type: application/json
+Body:
+{
+  "code": "BETA-TEST-2024"
+}
+
+RESPONSE (200 - Success):
+{
+  "success": true,
+  "credits_added": 5000,
+  "new_balance": 6000,
+  "message": "Success! Added 5000 credits to your account"
+}
+
+RESPONSE (400 - Already Used):
+{
+  "detail": "You have already used this coupon"
+}
+
+RESPONSE (400 - Expired):
+{
+  "detail": "This coupon has expired"
+}
+
+RESPONSE (400 - Fully Redeemed):
+{
+  "detail": "This coupon has been fully redeemed"
+}
+
+RESPONSE (404 - Invalid Code):
+{
+  "detail": "Invalid coupon code"
+}
+
+
+POST /api/analyze/playlist
+------------------------------------------------------------------
+AUTH: Required
+DESCRIPTION: Analyze playlist, costs 100 credits
+
+RESPONSE (200 - Success):
+{
+  "tracks_analyzed": 20,
+  "profile": { ... },
+  "credits_remaining": 900  ← Frontend updates display
+}
+
+RESPONSE (402 - Insufficient Credits):
+{
+  "detail": "Not enough credits. Need 100, have 50"
+}
+
+
+POST /api/compare/single
+------------------------------------------------------------------
+AUTH: Required
+DESCRIPTION: Compare single track, costs 100 credits
+
+RESPONSE (200):
+{
+  "mode": "playlist",
+  "comparison": { ... },
+  "recommendations": { ... },
+  "credits_remaining": 800  ← Frontend updates display
+}
+
+
+================================================================================
+6. SECURITY & VALIDATION
+================================================================================
+
+PREVENTING ABUSE
+------------------------------------------------------------------
+1. UNIQUE CONSTRAINT on (coupon_id, user_id)
+   - Database-level protection against duplicate redemptions
+   - Even if frontend/backend has bugs, DB prevents it
+
+2. ATOMIC TRANSACTIONS
+   - Credit addition + redemption logging + counter increment
+   - All or nothing - no partial states
+
+3. UPPERCASE NORMALIZATION
+   - Codes stored as uppercase in DB
+   - Frontend/backend always convert to uppercase
+   - "beta-test" = "BETA-TEST" = "beta-test" (same code)
+
+4. RATE LIMITING (Future)
+   - Add rate limiting to /api/credits/redeem
+   - Max 10 attempts per minute per user
+   - Prevents brute-force code guessing
+
+5. ADMIN-ONLY COUPON CREATION
+   - Only admins can create coupons via SQL or admin panel
+   - No public endpoint to create coupons
+
+
+AUDIT TRAIL
+------------------------------------------------------------------
+EVERY action is logged in credit_transactions:
+
+id  user_id  amount  type               description
+1   42       1000    signup_bonus       "Signup bonus"
+2   42       -100    analysis_cost      "Playlist analysis: 20 tracks"
+3   42       5000    coupon_redeemed    "Redeemed coupon: BETA-TEST-2024"
+4   42       -100    analysis_cost      "Single comparison: track.mp3"
+
+BENEFITS:
+- Fraud detection (unusual patterns)
+- Customer support (refunds, disputes)
+- Analytics (popular coupons, usage patterns)
+- Compliance (financial records)
+
+
+================================================================================
+7. MONETIZATION MODEL
+================================================================================
+
+CURRENT PRICING
+------------------------------------------------------------------
+START BONUS:     1000 credits (10 analyses)
+ANALYSIS COST:   100 credits
+COUPONS:         Variable (500-5000 credits)
+
+
+FUTURE: STRIPE INTEGRATION
+------------------------------------------------------------------
+When ready to accept payments:
+
+CREDIT PACKAGES:
+Starter Pack:    100 credits  = $5     ($0.05/credit)
+Pro Pack:        500 credits  = $20    ($0.04/credit) ← Best value
+Studio Pack:     1000 credits = $35    ($0.035/credit)
+
+IMPLEMENTATION:
+1. Add Stripe SDK to backend
+2. Create /api/credits/purchase endpoint
+3. Stripe Checkout Session
+4. Webhook to confirm payment
+5. Add credits to user account
+6. Log transaction as "purchase"
+
+ESTIMATE: 1-2 days to implement Stripe
+
+
+CONVERSION FUNNEL
+------------------------------------------------------------------
+1. Landing page → Sign up (1000 free credits)
+2. Use app → Make 10 free analyses
+3. Run out → See "Not enough credits" message
+4. Click "+ Add Credits" → Modal opens
+5. Option A: Use coupon (if have one)
+6. Option B: Buy credits (Stripe)
+
+
+REFERRAL PROGRAM (Future)
+------------------------------------------------------------------
+Give users a unique referral code
+When friend signs up with code:
+- Friend gets +500 credits bonus
+- Original user gets +200 credits reward
+
+IMPLEMENTATION:
+- Add user.referral_code field (auto-generated)
+- Add used_referral_code to signup
+- Create referral_rewards table
+- Display referral link in UI
+
+
+================================================================================
+8. TESTING GUIDE
+================================================================================
+
+MANUAL TESTING CHECKLIST
+------------------------------------------------------------------
+
+□ TEST 1: New User Registration
+  1. Register new account
+  2. ✓ Header shows "Credits: 1000 💎"
+  3. ✓ credit_transactions has signup_bonus row
+
+□ TEST 2: Analysis Cost
+  1. Do playlist analysis
+  2. ✓ Credits decrease: 1000 → 900
+  3. ✓ credit_transactions has analysis_cost row
+
+□ TEST 3: Coupon Redemption (First Time)
+  1. Click "+ Add Credits"
+  2. Enter "TEST1000"
+  3. ✓ Success message appears
+  4. ✓ Credits increase: 900 → 1900
+  5. ✓ coupon_redemptions has new row
+  6. ✓ coupons.current_uses incremented
+
+□ TEST 4: Duplicate Coupon (Already Used)
+  1. Try to use "TEST1000" again
+  2. ✓ Error: "You have already used this coupon"
+  3. ✓ Credits unchanged (still 1900)
+
+□ TEST 5: Invalid Coupon
+  1. Enter "INVALIDCODE123"
+  2. ✓ Error: "Invalid coupon code"
+
+□ TEST 6: Expired Coupon
+  1. Create coupon with expires_at in past
+  2. Try to redeem
+  3. ✓ Error: "This coupon has expired"
+
+□ TEST 7: Max Uses Exceeded
+  1. Create coupon with max_uses=1
+  2. User A redeems it
+  3. User B tries to redeem
+  4. ✓ Error: "This coupon has been fully redeemed"
+
+□ TEST 8: Insufficient Credits
+  1. User has 50 credits
+  2. Try to analyze (costs 100)
+  3. ✓ Error: "Not enough credits. Need 100, have 50"
+  4. ✓ Credits unchanged (still 50)
+
+□ TEST 9: Credits Display Update
+  1. Do analysis
+  2. ✓ Header updates immediately (no refresh needed)
+
+□ TEST 10: Logout State
+  1. Logout
+  2. ✓ Credits display hidden
+
+
+SAMPLE COUPONS FOR TESTING
+------------------------------------------------------------------
+After loading backend/sample_coupons.sql:
+
+TEST100          100 credits,   unlimited, never expires
+TEST1000         1000 credits,  unlimited, never expires
+TEST5000         5000 credits,  unlimited, never expires
+BETA-TESTER-2024 5000 credits,  1 use,     expires 2025-12-31
+BETATEST500      2000 credits,  50 uses,   expires 2025-06-30
+WELCOME2025      500 credits,   unlimited, never expires
+
+
+SQL QUERIES FOR DEBUGGING
+------------------------------------------------------------------
+
+-- View all coupons and usage
+SELECT code, credits, max_uses, current_uses, is_active, expires_at
+FROM coupons
+ORDER BY created_at DESC;
+
+-- View all redemptions for a user
+SELECT c.code, cr.credits_added, cr.redeemed_at
+FROM coupon_redemptions cr
+JOIN coupons c ON cr.coupon_id = c.id
+WHERE cr.user_id = 42
+ORDER BY cr.redeemed_at DESC;
+
+-- View credit transaction history
+SELECT amount, transaction_type, description, created_at
+FROM credit_transactions
+WHERE user_id = 42
+ORDER BY created_at DESC;
+
+-- Check user balance
+SELECT email, credits FROM users WHERE id = 42;
+
+
+================================================================================
+9. FUTURE ENHANCEMENTS
+================================================================================
+
+PHASE 2: STRIPE PAYMENTS
+------------------------------------------------------------------
+Priority: HIGH
+Timeline: 1-2 weeks
+
+FEATURES:
+- Credit package purchase ($5, $20, $35)
+- Stripe Checkout integration
+- Webhook for payment confirmation
+- Purchase history in UI
+
+FILES TO MODIFY:
+- backend/main.py (add Stripe endpoints)
+- frontend/index-wizard.html (add payment UI)
+- requirements.txt (add stripe package)
+
+
+PHASE 3: REFERRAL SYSTEM
+------------------------------------------------------------------
+Priority: MEDIUM
+Timeline: 1 week
+
+FEATURES:
+- Unique referral code per user
+- Bonus credits for referrer + referee
+- Referral dashboard (how many friends joined)
+- Shareable referral link
+
+DATABASE:
+- Add user.referral_code (auto-generated)
+- Add user.referred_by (optional FK)
+- Add referral_rewards table
+
+
+PHASE 4: ADMIN PANEL
+------------------------------------------------------------------
+Priority: MEDIUM
+Timeline: 2 weeks
+
+FEATURES:
+- Create/edit/deactivate coupons via UI
+- View all users + credit balances
+- Analytics dashboard (revenue, usage)
+- Refund/add credits manually
+
+TECH STACK:
+- React Admin or similar
+- Separate /admin route
+- Admin role in User model
+
+
+PHASE 5: SUBSCRIPTION PLANS
+------------------------------------------------------------------
+Priority: LOW
+Timeline: 2 weeks
+
+FEATURES:
+- Monthly plans ($10, $20, $50)
+- Unlimited analyses for subscribers
+- Auto-renewal via Stripe
+- Subscription management UI
+
+DATABASE:
+- Add user.subscription_tier
+- Add user.subscription_expires_at
+- Add subscriptions table
+
+
+PHASE 6: ADVANCED ANALYTICS
+------------------------------------------------------------------
+Priority: LOW
+Timeline: 1 week
+
+FEATURES:
+- Track popular coupon codes
+- Conversion funnel metrics
+- Revenue dashboard
+- User lifetime value (LTV)
+
+IMPLEMENTATION:
+- Add analytics events table
+- Integrate Google Analytics or Mixpanel
+- Build internal dashboard
+
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+
+For questions or updates, contact GRyba or refer to:
+- backend/models.py (database schema)
+- backend/main.py (API endpoints)
+- frontend/static/js/wizard.js (frontend logic)
+- backend/sample_coupons.sql (example data)
+
+Last updated: 2025-12-13
