@@ -317,7 +317,44 @@ async function analyzePlaylist() {
 
         sessionId = uploadResponse.session_id;
 
-        updateProgressModal(40, `Analyzing ${playlistFiles.length} tracks... This may take a minute.`);
+        // Start simulated detailed progress
+        const totalTracks = playlistFiles.length;
+        let currentProgress = 40;
+        
+        // Simulation settings
+        const analysisMessages = [
+            "Extracting spectral features...",
+            "Analyzing rhythm and beat...",
+            "Calculating energy profiles...",
+            "Detecting musical key...",
+            "Measuring dynamic range...",
+            "Aggregating sonic data...",
+            "Finalizing playlist profile..."
+        ];
+        
+        // Estimate 2 seconds per track for simulation speed
+        const estimatedDuration = totalTracks * 2000; 
+        const intervalTime = 200;
+        const totalSteps = estimatedDuration / intervalTime;
+        const progressIncrement = (55 / totalSteps); // Move from 40% to 95%
+
+        if (progressModalInterval) clearInterval(progressModalInterval);
+        
+        progressModalInterval = setInterval(() => {
+            currentProgress += progressIncrement;
+            if (currentProgress > 95) currentProgress = 95; // Cap at 95% until done
+
+            // Calculate which track we are "analyzing" based on progress
+            // Map 40-95% to 1-totalTracks
+            const progressRatio = (currentProgress - 40) / 55;
+            const currentTrackNum = Math.min(Math.ceil(progressRatio * totalTracks), totalTracks);
+            
+            // Cycle messages
+            const msgIndex = Math.floor(progressRatio * analysisMessages.length);
+            const detailMsg = analysisMessages[Math.min(msgIndex, analysisMessages.length - 1)];
+
+            updateProgressModal(currentProgress, `[${currentTrackNum}/${totalTracks}] ${detailMsg}`);
+        }, intervalTime);
 
         // Get selected parameters from playlist params
         const selectedParams = getPlaylistParameters();
