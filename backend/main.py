@@ -590,6 +590,45 @@ async def cleanup_session(
     raise HTTPException(status_code=404, detail="Session not found")
 
 
+# PRESET MANAGEMENT ENDPOINTS
+
+@app.post("/api/presets", response_model=schemas.Preset)
+def create_preset(
+    preset: schemas.PresetCreate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    db_preset = models.Preset(**preset.dict(), owner_id=current_user.id)
+    db.add(db_preset)
+    db.commit()
+    db.refresh(db_preset)
+    return db_preset
+
+@app.get("/api/presets", response_model=List[schemas.Preset])
+def read_presets(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    presets = db.query(models.Preset).filter(models.Preset.owner_id == current_user.id).offset(skip).limit(limit).all()
+    return presets
+
+@app.delete("/api/presets/{preset_id}")
+def delete_preset(
+    preset_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    db_preset = db.query(models.Preset).filter(models.Preset.id == preset_id, models.Preset.owner_id == current_user.id).first()
+    if not db_preset:
+        raise HTTPException(status_code=404, detail="Preset not found")
+    
+    db.delete(db_preset)
+    db.commit()
+    return {"message": "Preset deleted successfully"}
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""

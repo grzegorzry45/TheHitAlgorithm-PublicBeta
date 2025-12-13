@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -11,5 +11,14 @@ class User(Base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
 
-    # For future relationships, e.g., with analysis results
-    # analyses = relationship("Analysis", back_populates="owner")
+    presets = relationship("Preset", back_populates="owner")
+
+class Preset(Base):
+    __tablename__ = "presets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    profile = Column(JSON)  # Stores the statistical profile
+    owner_id = Column(Integer, ForeignKey("users.id"))
+
+    owner = relationship("User", back_populates="presets")
