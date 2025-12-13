@@ -413,9 +413,62 @@
 
 /* Preset List in Wizard */
 .preset-list {
-    max-height: 400px;
-    overflow-y: auto;
     margin-bottom: 20px;
+    /* Wrapper for split view - reset scroll */
+    max-height: none;
+    overflow: visible;
+}
+
+/* Split View for Presets */
+.presets-split-view {
+    display: flex;
+    gap: 20px;
+    height: 450px; /* Fixed height container */
+}
+
+.presets-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #111;
+    border: 1px solid #333;
+    padding: 15px;
+    border-radius: 0;
+}
+
+.preset-list-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px; /* Avoid scrollbar overlap */
+}
+
+/* Custom scrollbar for preset lists */
+.preset-list-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.preset-list-content::-webkit-scrollbar-track {
+    background: #0a0a0a;
+}
+
+.preset-list-content::-webkit-scrollbar-thumb {
+    background: #333;
+}
+
+.preset-list-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive Preset View */
+@media (max-width: 768px) {
+    .presets-split-view {
+        flex-direction: column-reverse; /* User presets first on mobile */
+        height: auto;
+    }
+    
+    .presets-column {
+        height: 300px;
+    }
 }
 
 /* Responsive Design */

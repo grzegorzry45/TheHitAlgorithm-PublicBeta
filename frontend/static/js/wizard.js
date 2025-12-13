@@ -1148,26 +1148,33 @@ function renderPresetsInWizard() {
         return;
     }
 
-    let html = '';
+    let html = '<div class="presets-split-view">';
 
-    // Render System Presets
-    if (system.length > 0) {
-        html += '<h4 class="preset-group-title">🏆 Official Algorithms</h4>';
-        system.forEach((preset) => {
-            html += createPresetHTML(preset, 'system');
-        });
-    }
-
-    // Render User Presets
+    // LEFT COLUMN: User Presets
+    html += '<div class="presets-column user-column">';
+    html += '<h4 class="preset-group-title">👤 Your Presets</h4>';
+    html += '<div class="preset-list-content">';
     if (user.length > 0) {
-        html += '<h4 class="preset-group-title" style="margin-top: 20px;">👤 Your Presets</h4>';
         user.forEach((preset, index) => {
             html += createPresetHTML(preset, 'user', index);
         });
     } else {
-        html += '<h4 class="preset-group-title" style="margin-top: 20px;">👤 Your Presets</h4>';
         html += '<p class="placeholder small">You haven\'t saved any presets yet.</p>';
     }
+    html += '</div></div>'; // Close content and column
+
+    // RIGHT COLUMN: System Presets
+    html += '<div class="presets-column system-column">';
+    html += '<h4 class="preset-group-title">🏆 Official Algorithms</h4>';
+    html += '<div class="preset-list-content">';
+    if (system.length > 0) {
+        system.forEach((preset) => {
+            html += createPresetHTML(preset, 'system');
+        });
+    }
+    html += '</div></div>'; // Close content and column
+
+    html += '</div>'; // Close split view
 
     listDiv.innerHTML = html;
 
