@@ -323,7 +323,10 @@ async def compare_batch(
             print(f"Error analyzing {file_path}: {e}")
 
     # Compare against playlist
-    comparator = PlaylistComparator(session["playlist_analysis"])
+    comparator = PlaylistComparator(
+        session.get("playlist_analysis"),
+        existing_profile=session.get("playlist_profile")
+    )
     recommendations = []
 
     for track in user_results:
@@ -412,7 +415,10 @@ async def compare_single(
             )
 
         try:
-            comparator = PlaylistComparator(session["playlist_analysis"])
+            comparator = PlaylistComparator(
+                session.get("playlist_analysis"),
+                existing_profile=session.get("playlist_profile")
+            )
             comparison = comparator.compare_track(user_features)
             recommendations = comparator.generate_recommendations(comparison)
 

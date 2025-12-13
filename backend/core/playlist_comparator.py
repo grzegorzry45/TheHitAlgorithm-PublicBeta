@@ -11,15 +11,21 @@ from .comparator import Comparator
 class PlaylistComparator:
     """Analyze playlist and compare tracks against it"""
 
-    def __init__(self, playlist_tracks: List[Dict]):
+    def __init__(self, playlist_tracks: List[Dict] = None, existing_profile: Dict = None):
         """
-        Initialize with list of analyzed tracks
+        Initialize with list of analyzed tracks OR existing profile
 
         Args:
             playlist_tracks: List of track features from playlist
+            existing_profile: Pre-calculated profile (optional)
         """
-        self.playlist_tracks = playlist_tracks
-        self.profile = self._create_profile()
+        self.playlist_tracks = playlist_tracks or []
+        
+        if existing_profile:
+            self.profile = existing_profile
+        else:
+            self.profile = self._create_profile()
+            
         self.comparator = Comparator(self.profile)
 
     def _create_profile(self) -> Dict:
