@@ -27,6 +27,167 @@ let maxStepReached = 1;
 // Progress modal interval
 let progressModalInterval = null;
 
+// ===== AUTHENTICATION =====
+let authToken = localStorage.getItem('access_token');
+
+function getAuthHeaders() {
+    return authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+}
+
+function handleAuthError(response) {
+    if (response.status === 401) {
+        showMessage('Session expired. Please login again.', 'error');
+        authToken = null;
+        localStorage.removeItem('access_token');
+        const loginBtn = document.getElementById('login-btn');
+        if (loginBtn) {
+            loginBtn.textContent = 'Login';
+            loginBtn.classList.replace('btn-primary', 'btn-secondary');
+        }
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) loginModal.style.display = 'flex';
+        return true;
+    }
+    return false;
+}
+
+function initializeAuth() {
+    const loginBtn = document.getElementById('login-btn');
+    const loginModal = document.getElementById('login-modal');
+    const registerModal = document.getElementById('register-modal');
+    
+    // Check if logged in
+    if (authToken) {
+        if (loginBtn) {
+            loginBtn.textContent = 'Logout';
+            loginBtn.classList.replace('btn-secondary', 'btn-primary');
+        }
+    }
+
+    // Login Button Click
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            if (authToken) {
+                // Handle Logout
+                authToken = null;
+                localStorage.removeItem('access_token');
+                loginBtn.textContent = 'Login';
+                loginBtn.classList.replace('btn-primary', 'btn-secondary');
+                showMessage('Logged out successfully', 'success');
+            } else {
+                // Show Login Modal
+                if (loginModal) loginModal.style.display = 'flex';
+            }
+        });
+    }
+
+    // Login Logic
+    document.getElementById('login-confirm')?.addEventListener('click', async () => {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const errorEl = document.getElementById('login-error');
+        
+        try {
+            const formData = new FormData();
+            formData.append('username', email);
+            formData.append('password', password);
+
+            const response = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Login failed');
+            }
+
+            const data = await response.json();
+            authToken = data.access_token;
+            localStorage.setItem('access_token', authToken);
+            
+            // Update UI
+            if (loginBtn) {
+                loginBtn.textContent = 'Logout';
+                loginBtn.classList.replace('btn-secondary', 'btn-primary');
+            }
+            if (loginModal) loginModal.style.display = 'none';
+            showMessage('Login successful!', 'success');
+            
+        } catch (error) {
+            if (errorEl) errorEl.textContent = error.message;
+        }
+    });
+
+    // Cancel Buttons
+    document.getElementById('login-cancel')?.addEventListener('click', () => {
+        if (loginModal) loginModal.style.display = 'none';
+    });
+    
+    // Switch to Register
+    document.getElementById('go-to-register')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (loginModal) loginModal.style.display = 'none';
+        if (registerModal) registerModal.style.display = 'flex';
+    });
+    
+    // Register Logic
+    document.getElementById('register-confirm')?.addEventListener('click', async () => {
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const confirmPass = document.getElementById('register-password-confirm').value;
+        const errorEl = document.getElementById('register-error');
+
+        if (password !== confirmPass) {
+            if (errorEl) errorEl.textContent = "Passwords do not match";
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Registration failed');
+            }
+
+            // Auto login after register
+            const formData = new FormData();
+            formData.append('username', email);
+            formData.append('password', password);
+            
+            const loginResp = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (loginResp.ok) {
+                const data = await loginResp.json();
+                authToken = data.access_token;
+                localStorage.setItem('access_token', authToken);
+                if (loginBtn) {
+                    loginBtn.textContent = 'Logout';
+                    loginBtn.classList.replace('btn-secondary', 'btn-primary');
+                }
+            }
+
+            if (registerModal) registerModal.style.display = 'none';
+            showMessage('Registration successful!', 'success');
+
+        } catch (error) {
+            if (errorEl) errorEl.textContent = error.message;
+        }
+    });
+    
+    document.getElementById('register-cancel')?.addEventListener('click', () => {
+        if (registerModal) registerModal.style.display = 'none';
+    });
+}
+
 // ===== PROGRESS MODAL FUNCTIONS =====
 
 function showProgressModal(title = 'Processing Audio...') {
@@ -75,6 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeWizard() {
     console.log("Initializing Wizard...");
     try {
+        // Initialize Auth first
+        initializeAuth();
+
         // Step 1: Reference selection
         initializeReferenceSelection();
 
@@ -381,13 +545,21 @@ async function analyzePlaylist() {
         // Analyze playlist
         const analyzeResponse = await fetch(`${API_BASE}/api/analyze/playlist`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
             body: JSON.stringify({
                 session_id: sessionId,
                 additional_params: selectedParams
             }),
             signal: abortController.signal
         });
+
+        if (handleAuthError(analyzeResponse)) {
+            hideProgressModal();
+            return;
+        }
 
         if (!analyzeResponse.ok) throw new Error('Analysis failed');
 
@@ -707,8 +879,14 @@ async function compareTrack() {
         const response = await fetch(`${API_BASE}/api/compare/single`, {
             method: 'POST',
             body: formData,
+            headers: getAuthHeaders(),
             signal: abortController.signal
         });
+
+        if (handleAuthError(response)) {
+            hideProgressModal();
+            return;
+        }
 
         // Clear interval - stops at ~96% "Almost complete..."
         if (progressModalInterval) {
@@ -868,9 +1046,14 @@ async function exportReport() {
     try {
         const response = await fetch(`${API_BASE}/api/report/generate`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
             body: JSON.stringify({ session_id: sessionId })
         });
+
+        if (handleAuthError(response)) return;
 
         if (!response.ok) throw new Error('Report generation failed');
 
@@ -1246,12 +1429,17 @@ async function loadPresetInWizard(preset) {
         // Send preset to backend
         const response = await fetch(`${API_BASE}/api/preset/load`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
             body: JSON.stringify({
                 profile: preset.profile,
                 analysis: preset.analysis
             })
         });
+
+        if (handleAuthError(response)) return;
 
         if (!response.ok) throw new Error('Failed to load preset');
 

@@ -14,6 +14,7 @@
             <h1 class="main-title">THE HIT ALGORITHM</h1>
             <p class="subtitle">COMPARE YOUR TRACK IN 3 SIMPLE STEPS</p>
             <p class="status">Public Beta v.2.0 - Simplified Interface</p>
+            <button id="login-btn" class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;">Login</button>
         </div>
     </header>
 
@@ -254,6 +255,40 @@
                     <div class="progress-fill-modal" id="progress-fill-modal"></div>
                 </div>
                 <p class="progress-message-modal" id="progress-message-modal">Initializing...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>🔑 Login</h3>
+            <div class="auth-form">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <p id="login-error" class="error-message"></p>
+                <div class="modal-buttons">
+                    <button id="login-confirm" class="btn btn-primary">LOGIN</button>
+                    <button id="login-cancel" class="btn btn-secondary">CANCEL</button>
+                </div>
+                <p style="margin-top: 15px; font-size: 13px;">Don't have an account? <a href="#" id="go-to-register">Register here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>📝 Register</h3>
+            <div class="auth-form">
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <input type="password" id="register-password-confirm" placeholder="Confirm Password" required>
+                <p id="register-error" class="error-message"></p>
+                <div class="modal-buttons">
+                    <button id="register-confirm" class="btn btn-primary">REGISTER</button>
+                    <button id="register-cancel" class="btn btn-secondary">CANCEL</button>
+                </div>
             </div>
         </div>
     </div>
