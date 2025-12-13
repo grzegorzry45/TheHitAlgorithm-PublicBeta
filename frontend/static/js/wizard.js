@@ -159,6 +159,13 @@ function initializeReferenceSelection() {
     const playlistFilesInput = document.getElementById('playlist-files');
     setupDragDrop(playlistUploadZone, playlistFilesInput, handlePlaylistFiles);
 
+    // Single track reference upload
+    const refUploadZone = document.getElementById('reference-track-upload');
+    const refFileInput = document.getElementById('reference-track-file');
+    setupDragDrop(refUploadZone, refFileInput, handleReferenceTrack);
+
+    document.getElementById('confirm-reference-btn')?.addEventListener('click', confirmReferenceTrack);
+
     document.getElementById('analyze-playlist-btn')?.addEventListener('click', analyzePlaylist);
 
     // Import preset button
