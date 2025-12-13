@@ -989,6 +989,7 @@ function selectEssentialParams() {
         cb.checked = essential.includes(cb.value);
     });
     updateCompareButton();
+    highlightPresetButton('select-essential');
 
     // Auto-scroll to compare button
     setTimeout(() => {
@@ -1004,6 +1005,7 @@ function selectAllParams() {
         cb.checked = true;
     });
     updateCompareButton();
+    highlightPresetButton('select-all-params');
 
     // Auto-scroll to compare button
     setTimeout(() => {
@@ -1020,6 +1022,7 @@ function selectEssentialPlaylistParams() {
         cb.checked = essential.includes(cb.value);
     });
     updateAnalyzeButton();
+    highlightPresetButton('select-essential-playlist');
 
     // Auto-scroll to analyze button
     setTimeout(() => {
@@ -1035,6 +1038,7 @@ function selectAllPlaylistParams() {
         cb.checked = true;
     });
     updateAnalyzeButton();
+    highlightPresetButton('select-all-params-playlist');
 
     // Auto-scroll to analyze button
     setTimeout(() => {
@@ -1245,4 +1249,17 @@ function showMessage(text, type = 'success') {
     container.insertBefore(message, container.firstChild);
 
     setTimeout(() => message.remove(), 5000);
+}
+
+function highlightPresetButton(selectedButtonId) {
+    // Find the parent quick select container
+    const parentContainer = document.getElementById(selectedButtonId).closest('.param-quick-select');
+    if (parentContainer) {
+        // Remove active class from all buttons in this container
+        parentContainer.querySelectorAll('button.btn').forEach(btn => {
+            btn.classList.remove('active-preset-btn');
+        });
+        // Add active class to the selected button
+        document.getElementById(selectedButtonId)?.classList.add('active-preset-btn');
+    }
 }
