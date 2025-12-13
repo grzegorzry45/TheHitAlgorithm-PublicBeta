@@ -1082,54 +1082,116 @@ function getPlaylistParameters() {
 
 // ===== PRESETS =====
 
+const SYSTEM_PRESETS = [
+    {
+        id: 'sys_modern_pop',
+        name: '🏆 Modern Pop Hit (2024)',
+        type: 'system',
+        timestamp: new Date().toISOString(),
+        profile: {
+            'bpm': { mean: 122.0, std: 4.0, min: 90, max: 160 },
+            'energy': { mean: 0.72, std: 0.1, min: 0.4, max: 0.95 },
+            'danceability': { mean: 0.75, std: 0.08, min: 0.5, max: 0.9 },
+            'loudness': { mean: -6.5, std: 1.5, min: -10, max: -4 },
+            'spectral_rolloff': { mean: 4500, std: 1200, min: 2000, max: 8000 },
+            'low_energy': { mean: 25.0, std: 5.0, min: 10, max: 40 },
+            'mid_energy': { mean: 45.0, std: 5.0, min: 30, max: 60 },
+            'high_energy': { mean: 30.0, std: 5.0, min: 10, max: 50 },
+            'beat_strength': { mean: 3.5, std: 0.5, min: 2, max: 5 },
+            'dynamic_range': { mean: 6.0, std: 2.0, min: 3, max: 12 }
+        }
+    },
+    {
+        id: 'sys_techno_bunker',
+        name: '🎹 Techno Bunker',
+        type: 'system',
+        timestamp: new Date().toISOString(),
+        profile: {
+            'bpm': { mean: 132.0, std: 2.0, min: 128, max: 135 },
+            'energy': { mean: 0.85, std: 0.05, min: 0.7, max: 0.98 },
+            'danceability': { mean: 0.78, std: 0.05, min: 0.6, max: 0.9 },
+            'loudness': { mean: -5.5, std: 1.0, min: -8, max: -3 },
+            'sub_bass_presence': { mean: 35.0, std: 8.0, min: 20, max: 60 },
+            'repetition_score': { mean: 0.85, std: 0.1, min: 0.5, max: 1.0 },
+            'stereo_width': { mean: 0.7, std: 0.15, min: 0.4, max: 0.9 }
+        }
+    },
+    {
+        id: 'sys_lofi_study',
+        name: '☕ Lo-Fi Study Beats',
+        type: 'system',
+        timestamp: new Date().toISOString(),
+        profile: {
+            'bpm': { mean: 85.0, std: 5.0, min: 70, max: 95 },
+            'energy': { mean: 0.4, std: 0.1, min: 0.2, max: 0.6 },
+            'danceability': { mean: 0.6, std: 0.1, min: 0.4, max: 0.8 },
+            'loudness': { mean: -12.0, std: 2.0, min: -16, max: -9 },
+            'transient_energy': { mean: 15.0, std: 5.0, min: 5, max: 30 },
+            'harmonic_to_noise_ratio': { mean: 8.0, std: 3.0, min: 0, max: 15 } // Lower HNR = more noise/texture
+        }
+    }
+];
+
 function loadPresetsForWizard() {
     // Load from localStorage
-    const presets = JSON.parse(localStorage.getItem('audio_presets') || '[]');
-    return presets;
+    const userPresets = JSON.parse(localStorage.getItem('audio_presets') || '[]');
+    // Return both system (first) and user presets
+    return { system: SYSTEM_PRESETS, user: userPresets };
 }
 
 function renderPresetsInWizard() {
-    const presets = loadPresetsForWizard();
+    const { system, user } = loadPresetsForWizard();
     const listDiv = document.getElementById('preset-list-display');
 
-    if (presets.length === 0) {
-        listDiv.innerHTML = '<p class="placeholder">No presets saved yet</p>';
+    if (system.length === 0 && user.length === 0) {
+        listDiv.innerHTML = '<p class="placeholder">No presets available</p>';
         return;
     }
 
     let html = '';
-    presets.forEach((preset, index) => {
-        html += `
-            <div class="preset-item wizard-preset" data-index="${index}">
-                <div class="preset-info">
-                    <span class="preset-name">${preset.name}</span>
-                    <span class="preset-date">${new Date(preset.timestamp).toLocaleDateString()}</span>
-                </div>
-                <div class="preset-actions">
-                    <button class="preset-btn load" data-index="${index}">Load</button>
-                    <button class="preset-btn delete" data-index="${index}" title="Delete Preset">✕</button>
-                </div>
-            </div>
-        `;
-    });
+
+    // Render System Presets
+    if (system.length > 0) {
+        html += '<h4 class="preset-group-title">🏆 Official Algorithms</h4>';
+        system.forEach((preset) => {
+            html += createPresetHTML(preset, 'system');
+        });
+    }
+
+    // Render User Presets
+    if (user.length > 0) {
+        html += '<h4 class="preset-group-title" style="margin-top: 20px;">👤 Your Presets</h4>';
+        user.forEach((preset, index) => {
+            html += createPresetHTML(preset, 'user', index);
+        });
+    } else {
+        html += '<h4 class="preset-group-title" style="margin-top: 20px;">👤 Your Presets</h4>';
+        html += '<p class="placeholder small">You haven\'t saved any presets yet.</p>';
+    }
 
     listDiv.innerHTML = html;
 
     // Add click handlers for LOAD
     listDiv.querySelectorAll('.preset-btn.load').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const index = e.target.dataset.index;
-            loadPresetInWizard(presets[index]);
+            const type = e.target.dataset.type;
+            let preset;
+            if (type === 'system') {
+                preset = system.find(p => p.id === e.target.dataset.id);
+            } else {
+                preset = user[parseInt(e.target.dataset.index)];
+            }
+            loadPresetInWizard(preset);
         });
     });
 
-    // Add click handlers for DELETE
+    // Add click handlers for DELETE (User only)
     listDiv.querySelectorAll('.preset-btn.delete').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (confirm('Are you sure you want to delete this preset?')) {
                 const index = parseInt(e.target.dataset.index);
-                const currentPresets = loadPresetsForWizard();
+                const currentPresets = JSON.parse(localStorage.getItem('audio_presets') || '[]');
                 currentPresets.splice(index, 1);
                 localStorage.setItem('audio_presets', JSON.stringify(currentPresets));
                 renderPresetsInWizard(); // Re-render list
@@ -1137,6 +1199,32 @@ function renderPresetsInWizard() {
             }
         });
     });
+}
+
+function createPresetHTML(preset, type, index = null) {
+    const isSystem = type === 'system';
+    const dateStr = new Date(preset.timestamp).toLocaleDateString();
+    const loadDataAttrs = isSystem ? `data-type="system" data-id="${preset.id}"` : `data-type="user" data-index="${index}"`;
+    
+    let actionsHTML = `<button class="preset-btn load" ${loadDataAttrs}>Load</button>`;
+    
+    if (!isSystem) {
+        actionsHTML += `<button class="preset-btn delete" data-index="${index}" title="Delete Preset">✕</button>`;
+    } else {
+        actionsHTML += `<span class="system-badge" title="Official Preset">🔒</span>`;
+    }
+
+    return `
+        <div class="preset-item wizard-preset ${isSystem ? 'system-preset' : ''}">
+            <div class="preset-info">
+                <span class="preset-name">${preset.name}</span>
+                <span class="preset-date">${isSystem ? 'Official Algorithm' : dateStr}</span>
+            </div>
+            <div class="preset-actions">
+                ${actionsHTML}
+            </div>
+        </div>
+    `;
 }
 
 async function loadPresetInWizard(preset) {
@@ -1208,13 +1296,16 @@ function savePreset() {
     };
     
     // Save to localStorage
-    const presets = loadPresetsForWizard();
-    presets.push(preset);
-    localStorage.setItem('audio_presets', JSON.stringify(presets));
+    const currentPresets = JSON.parse(localStorage.getItem('audio_presets') || '[]');
+    currentPresets.push(preset);
+    localStorage.setItem('audio_presets', JSON.stringify(currentPresets));
     
     // Close modal
     document.getElementById('save-preset-modal').style.display = 'none';
     nameInput.value = '';
+    
+    // Refresh list if visible
+    renderPresetsInWizard();
     
     showMessage(`Preset "${name}" saved successfully!`, 'success');
 }
@@ -1246,7 +1337,7 @@ function importPresetFile(file) {
             }
 
             // 2. Save to LocalStorage (if not already present)
-            const currentPresets = loadPresetsForWizard();
+            const currentPresets = JSON.parse(localStorage.getItem('audio_presets') || '[]');
             
             // Check for duplicate ID
             const index = currentPresets.findIndex(p => p.id === preset.id);
