@@ -161,6 +161,18 @@ function initializeReferenceSelection() {
 
     document.getElementById('analyze-playlist-btn')?.addEventListener('click', analyzePlaylist);
 
+    // Import preset button
+    const importPresetBtn = document.getElementById('import-preset-wizard-btn');
+    const importPresetInput = document.getElementById('import-preset-wizard-file');
+    if (importPresetBtn && importPresetInput) {
+        importPresetBtn.addEventListener('click', () => importPresetInput.click());
+        importPresetInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                importPresetFile(e.target.files[0]);
+            }
+        });
+    }
+
     // Save preset button
     document.getElementById('save-playlist-preset-btn')?.addEventListener('click', showSavePresetModal);
     document.getElementById('export-preset-file-btn')?.addEventListener('click', exportPresetToFile);
