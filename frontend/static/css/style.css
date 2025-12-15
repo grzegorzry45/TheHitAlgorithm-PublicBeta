@@ -209,8 +209,10 @@ body {
 /* --- Components: Upload Zone --- */
 
 .upload-zone {
-    background: var(--bg-elevated);
-    border: 2px dashed rgba(255, 255, 255, 0.1);
+    background: rgba(24, 24, 24, 0.35);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 2px dashed rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-lg);
     padding: 64px 24px;
     text-align: center;
@@ -218,13 +220,21 @@ body {
     transition: all 0.3s var(--ease-out);
     position: relative;
     margin-bottom: 32px;
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset;
 }
 
 .upload-zone:hover, .upload-zone.drag-over {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(36, 36, 36, 0.45);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
     border-color: var(--primary);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-hover);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 20px rgba(29, 185, 84, 0.15);
 }
 
 .upload-icon {
@@ -325,11 +335,16 @@ body {
 /* --- Parameter Selection (Collapsible) --- */
 
 .parameter-selection {
-    background: var(--bg-main);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(18, 18, 18, 0.5);
+    backdrop-filter: blur(25px) saturate(150%);
+    -webkit-backdrop-filter: blur(25px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md);
     padding: 24px;
     margin-bottom: 32px;
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.02) inset;
 }
 
 .collapsible-header {
@@ -449,7 +464,9 @@ body {
 }
 
 .file-item {
-    background: var(--bg-elevated);
+    background: rgba(24, 24, 24, 0.45);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
     padding: 12px 20px;
     margin-bottom: 8px;
     border-radius: var(--radius-sm);
@@ -457,8 +474,21 @@ body {
     justify-content: space-between;
     align-items: center;
     font-size: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-left: 3px solid var(--primary);
     animation: fadeIn 0.3s;
+    box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+    transition: all 0.2s var(--ease-out);
+}
+
+.file-item:hover {
+    background: rgba(36, 36, 36, 0.55);
+    backdrop-filter: blur(25px) saturate(160%);
+    -webkit-backdrop-filter: blur(25px) saturate(160%);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateX(4px);
 }
 
 .remove-file {
@@ -814,20 +844,30 @@ body {
 }
 
 .preset-item {
-    background: var(--bg-elevated);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(24, 24, 24, 0.45);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-sm);
     padding: 16px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.2s;
+    transition: all 0.3s var(--ease-out);
+    box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.02) inset;
 }
 
 .preset-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(36, 36, 36, 0.55);
+    backdrop-filter: blur(25px) saturate(160%);
+    -webkit-backdrop-filter: blur(25px) saturate(160%);
     transform: translateX(4px);
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset;
 }
 
 .preset-info {
