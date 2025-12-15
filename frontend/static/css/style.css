@@ -1112,7 +1112,7 @@ body {
 /* --- Advanced Params Modal Styling --- */
 
 .modal-content.large {
-    max-width: 1100px; /* Slightly wider */
+    max-width: 1600px; /* Maximize horizontal space for parameters */
     width: 95%;
     max-height: 85vh;
     display: flex;
@@ -1155,8 +1155,8 @@ body {
 .modal-body-scroll .param-groups, 
 .modal-body-scroll .params-grid-container {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 20px;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 16px;
     margin-top: 0;
     width: 100% !important;
     max-width: none !important;
@@ -1165,14 +1165,28 @@ body {
 }
 
 /* Responsive Grid for Modal */
+@media (max-width: 1400px) {
+    .modal-body-scroll .param-groups,
+    .modal-body-scroll .params-grid-container {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
 @media (max-width: 1024px) {
+    .modal-body-scroll .param-groups,
+    .modal-body-scroll .params-grid-container {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (max-width: 768px) {
     .modal-body-scroll .param-groups,
     .modal-body-scroll .params-grid-container {
         grid-template-columns: repeat(2, 1fr) !important;
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
     .modal-body-scroll .param-groups,
     .modal-body-scroll .params-grid-container {
         grid-template-columns: 1fr !important;
