@@ -372,13 +372,13 @@ function displayTrackName(containerId, filename, onRemove) {
     container.innerHTML = '';
 
     const trackElement = document.createElement('div');
-    trackElement.className = 'track-name';
+    trackElement.className = 'file-item';
     trackElement.innerHTML = `
-        <span>${filename}</span>
-        <button class="remove-track">✕</button>
+        <span class="file-name">🎵 ${filename}</span>
+        <button class="btn-remove">✕</button>
     `;
 
-    trackElement.querySelector('.remove-track').addEventListener('click', onRemove);
+    trackElement.querySelector('.btn-remove').addEventListener('click', onRemove);
     container.appendChild(trackElement);
 }
 
@@ -513,12 +513,12 @@ function handlePlaylistFiles(files) {
         const item = document.createElement('div');
         item.className = 'file-item';
         item.innerHTML = `
-            <span>${file.name}</span>
-            <button class="remove-file" data-index="${index}">✕</button>
+            <span class="file-name">🎵 ${file.name}</span>
+            <button class="btn-remove" data-index="${index}">✕</button>
         `;
         fileList.appendChild(item);
 
-        item.querySelector('.remove-file').addEventListener('click', (e) => {
+        item.querySelector('.btn-remove').addEventListener('click', (e) => {
             e.stopPropagation();
             playlistFiles.splice(index, 1);
             handlePlaylistFiles(playlistFiles);
@@ -784,12 +784,12 @@ function handleUserTrackFiles(files) {
         const item = document.createElement('div');
         item.className = 'file-item';
         item.innerHTML = `
-            <span>${file.name}</span>
-            <button class="remove-file" data-index="${index}">✕</button>
+            <span class="file-name">🎵 ${file.name}</span>
+            <button class="btn-remove" data-index="${index}">✕</button>
         `;
         fileList.appendChild(item);
 
-        item.querySelector('.remove-file').addEventListener('click', (e) => {
+        item.querySelector('.btn-remove').addEventListener('click', (e) => {
             e.stopPropagation();
             userTrackFiles.splice(index, 1);
             handleUserTrackFiles(userTrackFiles);

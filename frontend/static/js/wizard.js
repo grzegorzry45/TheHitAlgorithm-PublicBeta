@@ -716,15 +716,20 @@ function handleReferenceTrack(files) {
     if (files.length > 0) {
         referenceTrackFile = files[0];
         const nameContainer = document.getElementById('reference-track-name');
-        nameContainer.innerHTML = `
+        nameContainer.innerHTML = '';
+
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
             <span class="file-name">🎵 ${referenceTrackFile.name}</span>
             <button class="btn-remove">✕</button>
         `;
+        nameContainer.appendChild(fileItem);
         nameContainer.classList.add('has-file');
         document.getElementById('confirm-reference-btn').disabled = false;
 
         // Add remove functionality
-        nameContainer.querySelector('.btn-remove').addEventListener('click', () => {
+        fileItem.querySelector('.btn-remove').addEventListener('click', () => {
             referenceTrackFile = null;
             nameContainer.innerHTML = '';
             nameContainer.classList.remove('has-file');
@@ -875,14 +880,19 @@ function handleUserTrack(files) {
     if (files.length > 0) {
         userTrackFile = files[0];
         const nameContainer = document.getElementById('user-track-name');
-        nameContainer.innerHTML = `
+        nameContainer.innerHTML = '';
+
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
             <span class="file-name">🎵 ${userTrackFile.name}</span>
             <button class="btn-remove">✕</button>
         `;
+        nameContainer.appendChild(fileItem);
         nameContainer.classList.add('has-file');
 
         // Add remove functionality
-        nameContainer.querySelector('.btn-remove').addEventListener('click', () => {
+        fileItem.querySelector('.btn-remove').addEventListener('click', () => {
             userTrackFile = null;
             nameContainer.innerHTML = '';
             nameContainer.classList.remove('has-file');

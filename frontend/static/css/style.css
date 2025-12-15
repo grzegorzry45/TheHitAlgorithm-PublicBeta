@@ -496,7 +496,8 @@ body {
     transform: translateX(4px);
 }
 
-.remove-file {
+.remove-file,
+.btn-remove {
     background: transparent;
     border: none;
     color: var(--text-muted);
@@ -505,7 +506,8 @@ body {
     padding: 4px;
 }
 
-.remove-file:hover {
+.remove-file:hover,
+.btn-remove:hover {
     color: var(--error);
 }
 
