@@ -1037,6 +1037,15 @@ function displayResults(results) {
     const summaryDiv = document.getElementById('comparison-summary');
     const recommendationsDiv = document.getElementById('ai-recommendations');
 
+    // Update analyzed filename display
+    const filenameSpan = document.querySelector('#analyzed-filename-display span');
+    if (filenameSpan && results.user_track && results.user_track.filename) {
+        filenameSpan.textContent = results.user_track.filename;
+    } else if (filenameSpan && userTrackFile) {
+        // Fallback to client-side file name if backend doesn't return it
+        filenameSpan.textContent = userTrackFile.name;
+    }
+
     // Display side-by-side comparison
     if (results.user_track) {
         const userTrack = results.user_track;
