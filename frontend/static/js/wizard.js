@@ -1709,7 +1709,7 @@ async function importPresetFile(file) {
             if (!preset || typeof preset !== 'object') {
                 throw new Error('File content is not a valid JSON object');
             }
-            
+
             // Check for critical data
             if (!preset.profile || Object.keys(preset.profile).length === 0) {
                 throw new Error('Preset is missing valid playlist profile data');
@@ -1719,12 +1719,15 @@ async function importPresetFile(file) {
             if (!preset.name) {
                 preset.name = file.name.replace(/\.json$/i, '');
             }
-            
+
             // For imported, always use a new ID if saving to cloud
-            preset.id = 'imported_' + Date.now(); 
+            preset.id = 'imported_' + Date.now();
 
             if (!authToken) {
                 showMessage('Please login to import and save presets to the cloud.', 'error');
+                // Reset file input
+                const importInput = document.getElementById('import-preset-wizard-file');
+                if (importInput) importInput.value = '';
                 return;
             }
 
@@ -1740,21 +1743,45 @@ async function importPresetFile(file) {
                 body: JSON.stringify(presetData)
             });
 
-            if (handleAuthError(response)) return;
-            if (!response.ok) throw new Error('Failed to import and save preset to cloud');
+            if (handleAuthError(response)) {
+                // Reset file input
+                const importInput = document.getElementById('import-preset-wizard-file');
+                if (importInput) importInput.value = '';
+                return;
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Failed to import and save preset to cloud');
+            }
 
             // After saving, refresh the list to show new preset
             renderPresetsInWizard();
             showMessage(`Preset "${preset.name}" imported and saved to cloud!`, 'success');
-            
+
             // Load it into the wizard immediately
             loadPresetInWizard(preset);
+
+            // Reset file input
+            const importInput = document.getElementById('import-preset-wizard-file');
+            if (importInput) importInput.value = '';
 
         } catch (error) {
             console.error('Import error:', error);
             showMessage('Invalid preset file: ' + error.message, 'error');
+            // Reset file input even on error
+            const importInput = document.getElementById('import-preset-wizard-file');
+            if (importInput) importInput.value = '';
         }
     };
+
+    reader.onerror = () => {
+        showMessage('Failed to read file', 'error');
+        // Reset file input
+        const importInput = document.getElementById('import-preset-wizard-file');
+        if (importInput) importInput.value = '';
+    };
+
     reader.readAsText(file);
 }
 
