@@ -1112,8 +1112,8 @@ body {
 /* --- Advanced Params Modal Styling --- */
 
 .modal-content.large {
-    max-width: 95vw; /* Use viewport width instead of fixed px */
-    width: 95vw;
+    width: 90vw;
+    max-width: 90vw;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
@@ -1157,7 +1157,7 @@ body {
 .modal-body-scroll .param-groups,
 .modal-body-scroll .params-grid-container {
     display: grid !important;
-    grid-template-columns: repeat(6, 1fr) !important;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
     gap: 12px;
     margin: 0;
     padding: 0;
@@ -1166,32 +1166,11 @@ body {
     box-sizing: border-box !important;
 }
 
-/* Responsive Grid for Modal */
-@media (max-width: 1400px) {
+/* Responsive Grid for Modal - auto-fit handles this now, but keep minimal overrides for very small screens */
+@media (max-width: 600px) {
     .modal-body-scroll .param-groups,
     .modal-body-scroll .params-grid-container {
-        grid-template-columns: repeat(4, 1fr) !important;
-    }
-}
-
-@media (max-width: 1024px) {
-    .modal-body-scroll .param-groups,
-    .modal-body-scroll .params-grid-container {
-        grid-template-columns: repeat(3, 1fr) !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .modal-body-scroll .param-groups,
-    .modal-body-scroll .params-grid-container {
-        grid-template-columns: repeat(2, 1fr) !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .modal-body-scroll .param-groups,
-    .modal-body-scroll .params-grid-container {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
     }
 }
 
