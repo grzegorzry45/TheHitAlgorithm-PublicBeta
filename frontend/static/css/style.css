@@ -265,6 +265,16 @@ body {
     border-radius: var(--radius-full);
 }
 
+/* Upload zone size variants */
+.upload-zone.large {
+    min-height: 280px;
+}
+
+.upload-zone.small {
+    min-height: 180px;
+    padding: 40px;
+}
+
 /* --- Components: Buttons --- */
 
 .btn {

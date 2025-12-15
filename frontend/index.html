@@ -123,7 +123,7 @@
                     </div>
                 </div>
 
-                <div class="upload-zone" id="playlist-upload">
+                <div class="upload-zone large" id="playlist-upload">
                     <div class="upload-icon"><img src="/static/icons/library.svg" class="icon-svg large" alt=""></div>
                     <h3>Drag & Drop Playlist Files</h3>
                     <p>or click to browse</p>
@@ -193,7 +193,7 @@
                     <p>Upload your tracks to compare against the target playlist</p>
                 </div>
 
-                <div class="upload-zone" id="user-tracks-upload">
+                <div class="upload-zone large" id="user-tracks-upload">
                     <div class="upload-icon"><img src="/static/icons/library.svg" class="icon-svg large" alt=""></div>
                     <h3>Drag & Drop Your Tracks</h3>
                     <p>or click to browse</p>
@@ -342,9 +342,11 @@
                 <div class="compare-grid">
                     <div class="compare-section">
                         <h3>YOUR TRACK</h3>
-                        <div class="upload-zone small" id="user-single-upload">
-                            <div class="upload-icon"><img src="/static/icons/library.svg" class="icon-svg medium" alt=""></div>
-                            <p>Drop your track here</p>
+                        <div class="upload-zone large" id="user-single-upload">
+                            <div class="upload-icon"><img src="/static/icons/library.svg" class="icon-svg large" alt=""></div>
+                            <h3>Drag & Drop Your Track Here</h3>
+                            <p>or click to browse</p>
+                            <p class="file-types">Supported: MP3, WAV, FLAC</p>
                             <input type="file" id="user-single-file" accept=".mp3,.wav,.flac" style="display: none;">
                         </div>
                         <div id="user-single-name" class="track-name-container"></div>
@@ -352,9 +354,11 @@
 
                     <div class="compare-section" id="reference-section" style="display: none;">
                         <h3>REFERENCE TRACK</h3>
-                        <div class="upload-zone small" id="reference-upload">
-                            <div class="upload-icon"><img src="/static/icons/library.svg" class="icon-svg medium" alt=""></div>
-                            <p>Drop reference track</p>
+                        <div class="upload-zone large" id="reference-upload">
+                            <div class="upload-icon"><img src="/static/icons/library.svg" class="icon-svg large" alt=""></div>
+                            <h3>Drag & Drop Reference Track</h3>
+                            <p>or click to browse</p>
+                            <p class="file-types">Supported: MP3, WAV, FLAC</p>
                             <input type="file" id="reference-file" accept=".mp3,.wav,.flac" style="display: none;">
                         </div>
                         <div id="reference-name" class="track-name-container"></div>
