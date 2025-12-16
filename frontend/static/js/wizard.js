@@ -449,7 +449,8 @@ async function analyzePlaylistGatekeeper() {
         return;
     }
 
-    showProgressModal('Analyzing Playlist...', 'Extracting Golden 8 parameters using native sample rate...');
+    showProgressModal('Analyzing Playlist (AI Mode)...');
+    updateProgressModal(5, 'Extracting Golden 8 parameters using native sample rate...');
 
     try {
         const formData = new FormData();
@@ -510,7 +511,8 @@ async function compareTrackGatekeeper() {
         return;
     }
 
-    showProgressModal('Checking Track...', 'Analyzing your track against playlist profile...');
+    showProgressModal('Checking Track (AI Mode)...');
+    updateProgressModal(5, 'Analyzing your track against playlist profile...');
 
     try {
         const formData = new FormData();
