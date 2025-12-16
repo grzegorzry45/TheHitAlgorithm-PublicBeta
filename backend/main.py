@@ -25,6 +25,7 @@ from core.audio_processor import AudioProcessor
 from core.playlist_comparator import PlaylistComparator
 from core.track_comparator import TrackComparator
 from core.report_generator import ReportGenerator
+from core.playlist_gatekeeper import PlaylistGatekeeper
 
 app = FastAPI(title="The Algorithm", description="Decode Spotify's DNA")
 
@@ -644,6 +645,183 @@ async def load_preset(
         "session_id": session_id,
         "message": "Preset loaded successfully"
     }
+
+
+# GATEKEEPER (AI MODE) ENDPOINTS
+
+@app.post("/api/gatekeeper/analyze-playlist")
+async def gatekeeper_analyze_playlist(
+    files: List[UploadFile] = File(...),
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    Analyze playlist using Gatekeeper (Golden 8 only)
+    Cost: 100 credits per analysis
+    """
+    if len(files) < 2 or len(files) > 30:
+        raise HTTPException(
+            status_code=400,
+            detail="Please upload 2-30 tracks for Gatekeeper analysis"
+        )
+
+    # Check credits BEFORE analysis
+    check_credits(current_user, ANALYSIS_COST)
+
+    # Create session
+    session_id = str(uuid.uuid4())
+    session_dir = UPLOAD_DIR / session_id / "gatekeeper_playlist"
+    session_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save files
+    saved_files = []
+    for file in files:
+        if not file.filename.lower().endswith(('.mp3', '.wav', '.flac')):
+            continue
+
+        file_path = session_dir / file.filename
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        saved_files.append(str(file_path))
+
+    if not saved_files:
+        raise HTTPException(status_code=400, detail="No valid audio files uploaded")
+
+    # Extract Golden 8 from all tracks
+    gatekeeper = PlaylistGatekeeper()
+    playlist_features = []
+    errors = []
+
+    for file_path in saved_files:
+        try:
+            features = gatekeeper.extract_golden_8(file_path)
+            if features:
+                features['filename'] = Path(file_path).name
+                playlist_features.append(features)
+            else:
+                errors.append(f"{Path(file_path).name}: Failed to extract features")
+        except Exception as e:
+            errors.append(f"{Path(file_path).name}: {str(e)}")
+
+    if not playlist_features:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to analyze any tracks. Errors: {errors}"
+        )
+
+    # Fit gatekeeper model
+    success = gatekeeper.fit_playlist(playlist_features)
+    if not success:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create playlist profile"
+        )
+
+    # Store in session
+    sessions[session_id] = {
+        "mode": "gatekeeper",
+        "playlist_features": playlist_features,
+        "gatekeeper": gatekeeper
+    }
+
+    # Deduct credits AFTER successful analysis
+    deduct_credits(
+        current_user,
+        ANALYSIS_COST,
+        db,
+        f"Gatekeeper playlist analysis: {len(playlist_features)} tracks"
+    )
+
+    return {
+        "session_id": session_id,
+        "tracks_analyzed": len(playlist_features),
+        "errors": errors,
+        "playlist_features": playlist_features,
+        "credits_remaining": current_user.credits,
+        "message": "Gatekeeper playlist analysis complete"
+    }
+
+
+@app.post("/api/gatekeeper/check")
+async def gatekeeper_check_track(
+    user_track: UploadFile = File(...),
+    session_id: str = Form(...),
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    Check user track against Gatekeeper playlist
+    Returns LLM prompt for copy-paste into ChatGPT/Claude
+    Cost: 100 credits per check
+    """
+    if session_id not in sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    session = sessions[session_id]
+
+    if session.get("mode") != "gatekeeper":
+        raise HTTPException(
+            status_code=400,
+            detail="Session is not in Gatekeeper mode"
+        )
+
+    # Check credits BEFORE analysis
+    check_credits(current_user, ANALYSIS_COST)
+
+    # Save user track
+    session_dir = UPLOAD_DIR / session_id / "user_track"
+    session_dir.mkdir(parents=True, exist_ok=True)
+
+    user_path = session_dir / user_track.filename
+    with open(user_path, "wb") as buffer:
+        shutil.copyfileobj(user_track.file, buffer)
+
+    # Extract Golden 8 from user track
+    gatekeeper = session["gatekeeper"]
+
+    try:
+        user_features = gatekeeper.extract_golden_8(str(user_path))
+        if not user_features:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to extract features from user track"
+            )
+
+        user_features['filename'] = user_track.filename
+
+        # Check track against playlist
+        result = gatekeeper.check_track(user_features)
+
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+
+        # Deduct credits AFTER successful check
+        deduct_credits(
+            current_user,
+            ANALYSIS_COST,
+            db,
+            f"Gatekeeper track check: {user_track.filename}"
+        )
+
+        return {
+            "session_id": session_id,
+            "user_filename": user_track.filename,
+            "user_features": result["user_features"],
+            "nearest_reference": result["nearest_reference"],
+            "weighted_z_scores": result["weighted_z_scores"],
+            "critical_alerts": result["critical_alerts"],
+            "llm_prompt": result["llm_prompt"],
+            "credits_remaining": current_user.credits
+        }
+
+    except Exception as e:
+        print(f"Error in gatekeeper check: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gatekeeper check failed: {str(e)}"
+        )
 
 
 # CREDIT MANAGEMENT ENDPOINTS
