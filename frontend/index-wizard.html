@@ -66,6 +66,28 @@
                 <p class="step-description">How do you want to define the target sound you're comparing against?</p>
             </div>
 
+            <!-- Mode Toggle: Standard vs AI -->
+            <div class="mode-toggle-container" style="text-align: center; margin-bottom: 40px;">
+                <div style="margin-bottom: 16px;">
+                    <span style="font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 1px;">Analysis Mode</span>
+                </div>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="standard">
+                        📊 Standard Mode
+                        <span class="mode-desc">Full flexibility, 30+ parameters</span>
+                    </button>
+                    <button class="mode-btn" data-mode="ai">
+                        🤖 AI Mode
+                        <span class="mode-desc">Golden 8, LLM verdict</span>
+                    </button>
+                </div>
+                <div id="ai-mode-info" style="display: none; margin-top: 16px; padding: 16px; background: rgba(29, 185, 84, 0.08); border: 1px solid rgba(29, 185, 84, 0.3); border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    <p style="margin: 0; font-size: 14px; color: #1DB954; line-height: 1.6;">
+                        <strong>🤖 AI Mode:</strong> Fast analysis using only the "Golden 8" parameters. Get an expert LLM verdict by copying the generated prompt into ChatGPT, Claude, or Gemini.
+                    </p>
+                </div>
+            </div>
+
             <div class="reference-options">
                 <!-- Option 1: Create Playlist -->
                 <div class="reference-card" data-reference="playlist">
@@ -351,6 +373,65 @@
                 <p class="step-description">Here's how your track compares and what you can improve</p>
             </div>
 
+            <!-- AI MODE RESULTS -->
+            <div id="ai-mode-results-container" class="results-container" style="display: none;">
+                <!-- Critical Alerts Section -->
+                <div class="critical-alerts-section" style="margin-bottom: 32px;">
+                    <h3 style="display: flex; align-items: center; gap: 12px; color: #ff6b6b; margin-bottom: 16px;">
+                        ⚠️ Critical Alerts
+                    </h3>
+                    <div id="critical-alerts-list" style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Golden 8 Comparison -->
+                <div class="results-summary" style="margin-bottom: 32px;">
+                    <h3 style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <img src="/static/icons/analysis.svg" class="icon-svg medium" alt=""> Golden 8 Comparison
+                    </h3>
+                    <div id="golden-8-comparison" class="comparison-table">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- LLM Prompt Section -->
+                <div class="llm-prompt-section" style="background: var(--bg-surface); border-radius: var(--radius-lg); padding: 32px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <h3 style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        🤖 AI Verdict Prompt
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 14px;">
+                        Copy this prompt and paste it into ChatGPT, Claude, or Gemini to get an expert A&R verdict on your track.
+                    </p>
+
+                    <textarea
+                        id="llm-prompt-text"
+                        readonly
+                        style="width: 100%; min-height: 400px; background: rgba(0,0,0,0.3); color: #e0e0e0; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 20px; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; resize: vertical; margin-bottom: 16px;"
+                    ></textarea>
+
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button id="copy-prompt-btn" class="btn btn-primary" style="flex: 1; min-width: 200px;">
+                            📋 COPY PROMPT
+                        </button>
+                        <button onclick="window.open('https://chat.openai.com', '_blank')" class="btn btn-secondary" style="flex: 1; min-width: 150px;">
+                            🤖 Open ChatGPT
+                        </button>
+                        <button onclick="window.open('https://claude.ai', '_blank')" class="btn btn-secondary" style="flex: 1; min-width: 150px;">
+                            💎 Open Claude
+                        </button>
+                        <button onclick="window.open('https://gemini.google.com', '_blank')" class="btn btn-secondary" style="flex: 1; min-width: 150px;">
+                            ✨ Open Gemini
+                        </button>
+                    </div>
+
+                    <div id="copy-success-message" style="display: none; margin-top: 16px; padding: 12px; background: rgba(29, 185, 84, 0.15); border: 1px solid rgba(29, 185, 84, 0.3); border-radius: 6px; color: #1DB954; text-align: center;">
+                        ✓ Prompt copied to clipboard!
+                    </div>
+                </div>
+            </div>
+
+            <!-- STANDARD MODE RESULTS -->
             <div id="results-container" class="results-container">
                 <!-- Results will be populated by JavaScript -->
                 <div class="results-summary">

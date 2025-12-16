@@ -27,6 +27,10 @@ let maxStepReached = 1;
 // Progress modal interval
 let progressModalInterval = null;
 
+// AI MODE / GATEKEEPER
+let analysisMode = 'standard'; // 'standard' or 'ai'
+let gatekeeperResults = null;
+
 // ===== AUTHENTICATION =====
 let authToken = localStorage.getItem('access_token');
 let userEmail = null; // To store logged in user's email
@@ -273,6 +277,9 @@ function initializeWizard() {
         // Initialize Auth first
         initializeAuth();
 
+        // Initialize Mode Toggle (Standard vs AI)
+        initializeModeToggle();
+
         // Step 1: Reference selection
         initializeReferenceSelection();
 
@@ -288,7 +295,7 @@ function initializeWizard() {
 
         // Collapsible sections
         initializeCollapsibleSections();
-        
+
         // Params Modal
         initializeParamsModal();
 
@@ -392,6 +399,282 @@ function initializeCollapsibleSections() {
             }
         });
     });
+}
+
+// ===== MODE TOGGLE (Standard vs AI) =====
+
+function initializeModeToggle() {
+    const modeButtons = document.querySelectorAll('.mode-btn');
+    const aiModeInfo = document.getElementById('ai-mode-info');
+
+    modeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const mode = btn.dataset.mode;
+            switchAnalysisMode(mode);
+        });
+    });
+}
+
+function switchAnalysisMode(mode) {
+    analysisMode = mode;
+
+    // Update toggle buttons
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+
+    // Show/hide AI Mode info
+    const aiModeInfo = document.getElementById('ai-mode-info');
+    if (aiModeInfo) {
+        aiModeInfo.style.display = mode === 'ai' ? 'block' : 'none';
+    }
+
+    // In Step 2: Hide parameter selection in AI Mode
+    const parameterSelection = document.querySelector('.parameter-selection-wizard');
+    if (parameterSelection) {
+        parameterSelection.style.display = mode === 'ai' ? 'none' : 'block';
+    }
+
+    // Update compare button state
+    updateCompareButton();
+
+    console.log(`Switched to ${mode} mode`);
+}
+
+// ===== GATEKEEPER (AI MODE) FUNCTIONS =====
+
+async function analyzePlaylistGatekeeper() {
+    if (playlistFiles.length < 2 || playlistFiles.length > 30) {
+        showMessage('Please upload 2-30 tracks for Gatekeeper analysis', 'error');
+        return;
+    }
+
+    showProgressModal('Analyzing Playlist...', 'Extracting Golden 8 parameters using native sample rate...');
+
+    try {
+        const formData = new FormData();
+        playlistFiles.forEach(file => {
+            formData.append('files', file);
+        });
+
+        const response = await fetch(`${API_BASE}/api/gatekeeper/analyze-playlist`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData
+        });
+
+        if (!response.ok) {
+            if (handleAuthError(response)) return;
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || `Analysis failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        sessionId = data.session_id;
+        document.getElementById('session-id').textContent = sessionId;
+
+        // Update credits
+        if (data.credits_remaining !== undefined) {
+            updateCreditsDisplay(data.credits_remaining);
+        }
+
+        // Mark reference as ready
+        referenceReady = true;
+        document.getElementById('wizard-reference-ready').textContent = 'true';
+
+        hideProgressModal();
+
+        showMessage(`✓ Playlist analyzed! ${data.tracks_analyzed} tracks processed using Golden 8.`, 'success');
+
+        // Move to Step 2
+        setTimeout(() => {
+            goToStep(2);
+        }, 1000);
+
+    } catch (error) {
+        hideProgressModal();
+        console.error('Gatekeeper playlist analysis error:', error);
+        showMessage('Analysis failed: ' + error.message, 'error');
+    }
+}
+
+async function compareTrackGatekeeper() {
+    if (!userTrackFile) {
+        showMessage('Please upload your track first', 'error');
+        return;
+    }
+
+    if (!sessionId) {
+        showMessage('No active Gatekeeper session. Please analyze a playlist first.', 'error');
+        return;
+    }
+
+    showProgressModal('Checking Track...', 'Analyzing your track against playlist profile...');
+
+    try {
+        const formData = new FormData();
+        formData.append('user_track', userTrackFile);
+        formData.append('session_id', sessionId);
+
+        const response = await fetch(`${API_BASE}/api/gatekeeper/check`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: formData
+        });
+
+        if (!response.ok) {
+            if (handleAuthError(response)) return;
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || `Check failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Store results
+        gatekeeperResults = data;
+
+        // Update credits
+        if (data.credits_remaining !== undefined) {
+            updateCreditsDisplay(data.credits_remaining);
+        }
+
+        hideProgressModal();
+
+        // Display results
+        displayGatekeeperResults(data);
+
+        // Go to Step 3
+        goToStep(3);
+
+    } catch (error) {
+        hideProgressModal();
+        console.error('Gatekeeper check error:', error);
+        showMessage('Track check failed: ' + error.message, 'error');
+    }
+}
+
+function displayGatekeeperResults(data) {
+    // Hide standard results, show AI mode results
+    document.getElementById('results-container').style.display = 'none';
+    document.getElementById('ai-mode-results-container').style.display = 'block';
+
+    // Display critical alerts
+    displayCriticalAlerts(data.critical_alerts);
+
+    // Display Golden 8 comparison
+    displayGolden8Comparison(data.user_features, data.nearest_reference, data.weighted_z_scores);
+
+    // Display LLM prompt
+    displayLLMPrompt(data.llm_prompt);
+
+    // Setup copy button
+    const copyBtn = document.getElementById('copy-prompt-btn');
+    if (copyBtn) {
+        copyBtn.onclick = () => copyLLMPrompt();
+    }
+}
+
+function displayCriticalAlerts(alerts) {
+    const container = document.getElementById('critical-alerts-list');
+    if (!container) return;
+
+    if (!alerts || alerts.length === 0) {
+        container.innerHTML = '<div style="padding: 16px; background: rgba(29, 185, 84, 0.1); border: 1px solid rgba(29, 185, 84, 0.3); border-radius: 8px; color: #1DB954;">✓ No critical alerts detected</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    alerts.forEach(alert => {
+        const alertDiv = document.createElement('div');
+        const isCritical = alert.includes('CRITICAL');
+        const bgColor = isCritical ? 'rgba(255, 107, 107, 0.1)' : 'rgba(255, 193, 7, 0.1)';
+        const borderColor = isCritical ? 'rgba(255, 107, 107, 0.3)' : 'rgba(255, 193, 7, 0.3)';
+        const textColor = isCritical ? '#ff6b6b' : '#ffc107';
+
+        alertDiv.style.cssText = `
+            padding: 12px 16px;
+            background: ${bgColor};
+            border: 1px solid ${borderColor};
+            border-radius: 6px;
+            color: ${textColor};
+            font-size: 14px;
+        `;
+        alertDiv.textContent = alert;
+        container.appendChild(alertDiv);
+    });
+}
+
+function displayGolden8Comparison(userFeatures, refFeatures, zScores) {
+    const container = document.getElementById('golden-8-comparison');
+    if (!container) return;
+
+    const golden8Order = [
+        { key: 'bpm', label: 'BPM', unit: '' },
+        { key: 'beat_strength', label: 'Beat Strength', unit: '' },
+        { key: 'onset_rate', label: 'Onset Rate', unit: '/s' },
+        { key: 'energy', label: 'Energy', unit: '' },
+        { key: 'danceability', label: 'Danceability (Pulse Clarity)', unit: '' },
+        { key: 'spectral_rolloff', label: 'Spectral Rolloff', unit: ' Hz' },
+        { key: 'spectral_flatness', label: 'Spectral Flatness', unit: '' },
+        { key: 'dynamic_range', label: 'Dynamic Range', unit: ' dB' }
+    ];
+
+    let html = '<table style="width: 100%; border-collapse: collapse;">';
+    html += '<thead><tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">';
+    html += '<th style="padding: 12px; text-align: left; color: var(--text-secondary); font-size: 13px;">Parameter</th>';
+    html += '<th style="padding: 12px; text-align: right; color: var(--text-secondary); font-size: 13px;">Your Track</th>';
+    html += '<th style="padding: 12px; text-align: right; color: var(--text-secondary); font-size: 13px;">Reference</th>';
+    html += '<th style="padding: 12px; text-align: right; color: var(--text-secondary); font-size: 13px;">Z-Score</th>';
+    html += '</tr></thead><tbody>';
+
+    golden8Order.forEach(param => {
+        const userVal = userFeatures[param.key];
+        const refVal = refFeatures[param.key];
+        const zData = zScores[param.key];
+        const weightedZ = zData.weighted_z;
+
+        // Color based on weighted Z-score
+        let zColor = '#1DB954'; // green
+        if (Math.abs(weightedZ) > 2.0) zColor = '#ff6b6b'; // red
+        else if (Math.abs(weightedZ) > 1.5) zColor = '#ffc107'; // yellow
+
+        html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">`;
+        html += `<td style="padding: 12px; font-weight: 500;">${param.label}</td>`;
+        html += `<td style="padding: 12px; text-align: right; font-family: var(--font-mono); color: var(--primary);">${userVal.toFixed(2)}${param.unit}</td>`;
+        html += `<td style="padding: 12px; text-align: right; font-family: var(--font-mono);">${refVal.toFixed(2)}${param.unit}</td>`;
+        html += `<td style="padding: 12px; text-align: right; font-family: var(--font-mono); font-weight: 600; color: ${zColor};">${weightedZ.toFixed(2)}</td>`;
+        html += `</tr>`;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function displayLLMPrompt(prompt) {
+    const textarea = document.getElementById('llm-prompt-text');
+    if (textarea) {
+        textarea.value = prompt;
+    }
+}
+
+function copyLLMPrompt() {
+    const textarea = document.getElementById('llm-prompt-text');
+    const successMsg = document.getElementById('copy-success-message');
+
+    if (textarea) {
+        textarea.select();
+        document.execCommand('copy');
+
+        if (successMsg) {
+            successMsg.style.display = 'block';
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+            }, 3000);
+        }
+
+        showMessage('✓ Prompt copied to clipboard!', 'success');
+    }
 }
 
 // ===== STEP 1: REFERENCE SELECTION =====
@@ -558,6 +841,11 @@ async function analyzePlaylist() {
     if (playlistFiles.length < 2) {
         showMessage('Please upload at least 2 tracks', 'error');
         return;
+    }
+
+    // Check if AI Mode is active
+    if (analysisMode === 'ai') {
+        return await analyzePlaylistGatekeeper();
     }
 
     // Show progress modal
@@ -915,8 +1203,14 @@ function handleUserTrack(files) {
 function updateCompareButton() {
     const compareBtn = document.getElementById('compare-now-btn');
     const hasFile = userTrackFile !== null;
-    const hasParams = getSelectedParameters().length > 0;
-    compareBtn.disabled = !(hasFile && hasParams);
+
+    // In AI Mode, parameters are automatic (Golden 8)
+    if (analysisMode === 'ai') {
+        compareBtn.disabled = !hasFile;
+    } else {
+        const hasParams = getSelectedParameters().length > 0;
+        compareBtn.disabled = !(hasFile && hasParams);
+    }
 }
 
 async function compareTrack() {
@@ -927,6 +1221,11 @@ async function compareTrack() {
     if (!userTrackFile || !referenceReady) {
         showMessage('Please complete all required fields', 'error');
         return;
+    }
+
+    // Check if AI Mode is active
+    if (analysisMode === 'ai') {
+        return await compareTrackGatekeeper();
     }
 
     // Show progress modal
