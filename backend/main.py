@@ -637,8 +637,32 @@ async def load_preset(
 
     # Check if this is a Gatekeeper preset
     preset_mode = None
+    gatekeeper_obj = None
+
     if isinstance(profile, dict) and profile.get("mode") == "gatekeeper":
         preset_mode = "gatekeeper"
+
+        # Recreate Gatekeeper object from preset data
+        playlist_features = profile.get("tracks", [])
+        if not playlist_features:
+            raise HTTPException(
+                status_code=400,
+                detail="Gatekeeper preset has no playlist features"
+            )
+
+        try:
+            gatekeeper_obj = PlaylistGatekeeper()
+            success = gatekeeper_obj.fit_playlist(playlist_features)
+            if not success:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to fit Gatekeeper model from preset"
+                )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to initialize Gatekeeper from preset: {str(e)}"
+            )
 
     session_data = {
         "playlist_files": [],
@@ -647,9 +671,11 @@ async def load_preset(
         "playlist_analysis": analysis
     }
 
-    # Set mode if it's a Gatekeeper preset
+    # Set mode and gatekeeper object if it's a Gatekeeper preset
     if preset_mode:
         session_data["mode"] = preset_mode
+        session_data["playlist_features"] = profile.get("tracks", [])
+        session_data["gatekeeper"] = gatekeeper_obj
 
     sessions[session_id] = session_data
 
