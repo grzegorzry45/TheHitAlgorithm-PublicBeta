@@ -2224,6 +2224,20 @@ function renderPresetsInWizard() {
             });
         });
 
+        // Add click handlers for EXPORT (User only)
+        listDiv.querySelectorAll('.preset-btn.export').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const presetId = parseInt(e.target.dataset.id);
+                const preset = user.find(p => p.id === presetId);
+                if (preset) {
+                    exportPreset(preset);
+                } else {
+                    showMessage('Preset not found!', 'error');
+                }
+            });
+        });
+
         // Add click handlers for DELETE (User only)
         listDiv.querySelectorAll('.preset-btn.delete').forEach(btn => {
             btn.addEventListener('click', async (e) => {
@@ -2258,14 +2272,15 @@ function renderPresetsInWizard() {
 function createPresetHTML(preset, type) { // Removed index, using ID for cloud
     const isSystem = type === 'system';
     const dateStr = new Date(preset.timestamp).toLocaleDateString();
-    
+
     // For user presets, data-id will be backend ID
     // For system presets, data-id is system ID (string)
-    const loadDataAttrs = isSystem ? `data-type="system" data-id="${preset.id}"` : `data-type="user" data-id="${preset.id}"`; 
-    
+    const loadDataAttrs = isSystem ? `data-type="system" data-id="${preset.id}"` : `data-type="user" data-id="${preset.id}"`;
+
     let actionsHTML = `<button class="preset-btn load" ${loadDataAttrs}>Load</button>`;
-    
+
     if (!isSystem) {
+        actionsHTML += `<button class="preset-btn export" data-id="${preset.id}" title="Export to file">💾</button>`;
         actionsHTML += `<button class="preset-btn delete" data-id="${preset.id}" title="Delete Preset">✕</button>`;
     } else {
         actionsHTML += `<span class="system-badge" title="Official Preset">🔒</span>`;
@@ -2466,6 +2481,42 @@ async function importPresetFile(file) {
     };
 
     reader.readAsText(file);
+}
+
+function exportPreset(preset) {
+    try {
+        // Create export object with all necessary data
+        const exportData = {
+            name: preset.name,
+            profile: preset.profile,
+            analysis: preset.analysis || [],
+            timestamp: preset.timestamp || new Date().toISOString(),
+            exported_at: new Date().toISOString()
+        };
+
+        // Convert to JSON string with pretty formatting
+        const jsonString = JSON.stringify(exportData, null, 2);
+
+        // Create blob and download
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Create filename from preset name (sanitize for filesystem)
+        const sanitizedName = preset.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        a.download = `preset_${sanitizedName}_${Date.now()}.json`;
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showMessage(`Preset "${preset.name}" exported successfully!`, 'success');
+    } catch (error) {
+        console.error('Export error:', error);
+        showMessage('Failed to export preset: ' + error.message, 'error');
+    }
 }
 
 // ===== UTILITIES =====
