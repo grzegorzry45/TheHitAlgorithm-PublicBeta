@@ -2202,6 +2202,18 @@ function renderPresetsInWizard() {
         const importInput = document.getElementById('import-preset-wizard-file');
         if (newImportBtn && importInput) {
             newImportBtn.addEventListener('click', () => importInput.click());
+
+            // Re-attach change listener to file input (ensure it's always attached)
+            // Remove old listener first to prevent duplicates
+            const newInput = importInput.cloneNode(true);
+            importInput.parentNode.replaceChild(newInput, importInput);
+
+            // Attach new listener
+            document.getElementById('import-preset-wizard-file').addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importPresetFile(e.target.files[0]);
+                }
+            });
         }
 
         // Add click handlers for LOAD
