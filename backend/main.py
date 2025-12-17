@@ -90,6 +90,16 @@ audio_processor = AudioProcessor()
 # In-memory storage for session data - TODO: Move to database later
 sessions = {}
 
+# ENVIRONMENT DETECTION
+# Railway sets RAILWAY_ENVIRONMENT variable automatically
+IS_RAILWAY = os.environ.get("RAILWAY_ENVIRONMENT") is not None
+
+# PLAYLIST LIMITS
+# On Railway: limit to 30 tracks to prevent timeout (60s limit)
+# Locally: allow up to 200 tracks for creating factory presets
+MAX_TRACKS = 30 if IS_RAILWAY else 200
+MIN_TRACKS = 2
+
 # CREDIT MANAGEMENT CONSTANTS
 ANALYSIS_COST = 100  # Cost per analysis in credits
 
@@ -174,10 +184,10 @@ async def upload_playlist(
     Upload playlist files for analysis
     Returns session_id for tracking
     """
-    if len(files) < 2 or len(files) > 30:
+    if len(files) < MIN_TRACKS or len(files) > MAX_TRACKS:
         raise HTTPException(
             status_code=400,
-            detail="Please upload 2-30 tracks for analysis"
+            detail=f"Please upload {MIN_TRACKS}-{MAX_TRACKS} tracks for analysis"
         )
 
     # Create session
@@ -702,10 +712,10 @@ async def gatekeeper_analyze_playlist(
     Analyze playlist using Gatekeeper (Golden 8 only)
     Cost: 100 credits per analysis
     """
-    if len(files) < 2 or len(files) > 30:
+    if len(files) < MIN_TRACKS or len(files) > MAX_TRACKS:
         raise HTTPException(
             status_code=400,
-            detail="Please upload 2-30 tracks for Gatekeeper analysis"
+            detail=f"Please upload {MIN_TRACKS}-{MAX_TRACKS} tracks for Gatekeeper analysis"
         )
 
     # Check credits BEFORE analysis
