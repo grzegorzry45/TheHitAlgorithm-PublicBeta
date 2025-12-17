@@ -719,7 +719,7 @@ function displayCriticalAlerts(alerts) {
     if (!container) return;
 
     if (!alerts || alerts.length === 0) {
-        container.innerHTML = '<div style="padding: 16px; background: rgba(29, 185, 84, 0.1); border: 1px solid rgba(29, 185, 84, 0.3); border-radius: 8px; color: #1DB954;">✓ No critical alerts detected</div>';
+        container.innerHTML = '<div style="padding: 12px 16px; background: rgba(29, 185, 84, 0.1); border: 1px solid rgba(29, 185, 84, 0.3); border-radius: 6px; color: #1DB954; grid-column: 1 / -1; text-align: center;">✓ No critical alerts detected</div>';
         return;
     }
 
@@ -730,16 +730,23 @@ function displayCriticalAlerts(alerts) {
         const bgColor = isCritical ? 'rgba(255, 107, 107, 0.1)' : 'rgba(255, 193, 7, 0.1)';
         const borderColor = isCritical ? 'rgba(255, 107, 107, 0.3)' : 'rgba(255, 193, 7, 0.3)';
         const textColor = isCritical ? '#ff6b6b' : '#ffc107';
+        const icon = isCritical ? '⚠️' : '⚡';
 
         alertDiv.style.cssText = `
-            padding: 12px 16px;
+            padding: 10px 12px;
             background: ${bgColor};
             border: 1px solid ${borderColor};
+            border-left: 3px solid ${borderColor};
             border-radius: 6px;
             color: ${textColor};
-            font-size: 14px;
+            font-size: 13px;
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
         `;
-        alertDiv.textContent = alert;
+
+        alertDiv.innerHTML = `<span style="flex-shrink: 0; font-size: 16px;">${icon}</span><span style="flex: 1;">${alert}</span>`;
         container.appendChild(alertDiv);
     });
 }
