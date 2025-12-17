@@ -26,6 +26,7 @@ class Preset(Base):
     name = Column(String, index=True)
     profile = Column(JSON)  # Stores the statistical profile
     owner_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     owner = relationship("User", back_populates="presets")
 

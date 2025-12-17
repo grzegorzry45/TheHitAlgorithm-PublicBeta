@@ -2283,7 +2283,9 @@ function renderPresetsInWizard() {
 
 function createPresetHTML(preset, type) { // Removed index, using ID for cloud
     const isSystem = type === 'system';
-    const dateStr = new Date(preset.timestamp).toLocaleDateString();
+    // User presets from backend have created_at, system presets have timestamp
+    const dateField = preset.created_at || preset.timestamp;
+    const dateStr = dateField ? new Date(dateField).toLocaleDateString() : 'Recently saved';
 
     // For user presets, data-id will be backend ID
     // For system presets, data-id is system ID (string)
