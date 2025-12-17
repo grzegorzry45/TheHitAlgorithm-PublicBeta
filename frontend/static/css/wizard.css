@@ -629,9 +629,32 @@
         0 20px 60px rgba(0, 0, 0, 0.4);
     border-radius: var(--radius-lg);
     padding: 40px;
-    min-width: 320px;
-    max-width: 500px;
+    width: 450px;
+    min-height: 280px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.progress-modal-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.progress-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-main);
+}
+
+.progress-modal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .progress-spinner {
@@ -670,4 +693,33 @@
     color: var(--text-secondary);
     font-size: 14px;
     font-weight: 500;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.4;
+}
+
+/* Responsive progress modal */
+@media (max-width: 768px) {
+    .progress-modal-content {
+        width: 90%;
+        max-width: 400px;
+        min-height: 240px;
+        padding: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-modal-content {
+        width: 90%;
+        max-width: 320px;
+        min-height: 220px;
+        padding: 24px;
+    }
+
+    .progress-message-modal {
+        font-size: 13px;
+        min-height: 38px;
+    }
 }
