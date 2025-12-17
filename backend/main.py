@@ -184,10 +184,11 @@ async def upload_playlist(
     Upload playlist files for analysis
     Returns session_id for tracking
     """
-    if len(files) < MIN_TRACKS or len(files) > MAX_TRACKS:
+    # No limit on number of tracks - removed for factory preset creation
+    if len(files) < MIN_TRACKS:
         raise HTTPException(
             status_code=400,
-            detail=f"Please upload {MIN_TRACKS}-{MAX_TRACKS} tracks for analysis"
+            detail=f"Please upload at least {MIN_TRACKS} tracks for analysis"
         )
 
     # Create session
@@ -712,10 +713,11 @@ async def gatekeeper_analyze_playlist(
     Analyze playlist using Gatekeeper (Golden 8 only)
     Cost: 100 credits per analysis
     """
-    if len(files) < MIN_TRACKS or len(files) > MAX_TRACKS:
+    # No limit on number of tracks - removed for factory preset creation
+    if len(files) < MIN_TRACKS:
         raise HTTPException(
             status_code=400,
-            detail=f"Please upload {MIN_TRACKS}-{MAX_TRACKS} tracks for Gatekeeper analysis"
+            detail=f"Please upload at least {MIN_TRACKS} tracks for Gatekeeper analysis"
         )
 
     # Check credits BEFORE analysis

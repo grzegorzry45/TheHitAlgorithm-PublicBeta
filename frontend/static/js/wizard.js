@@ -471,8 +471,8 @@ function switchAnalysisMode(mode) {
 // ===== GATEKEEPER (AI MODE) FUNCTIONS =====
 
 async function analyzePlaylistGatekeeper() {
-    if (playlistFiles.length < 2 || playlistFiles.length > 30) {
-        showMessage('Please upload 2-30 tracks for Gatekeeper analysis', 'error');
+    if (playlistFiles.length < 2) {
+        showMessage('Please upload at least 2 tracks for Gatekeeper analysis', 'error');
         return;
     }
 
