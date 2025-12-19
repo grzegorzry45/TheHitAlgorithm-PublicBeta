@@ -361,6 +361,46 @@
             font-size: 14px;
         }
 
+        /* Auth Form Styles */
+        .auth-form {
+            margin-top: 20px;
+        }
+
+        .auth-form input[type="email"],
+        .auth-form input[type="password"] {
+            width: 100%;
+            background: var(--bg-main);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-size: 15px;
+            font-family: var(--font-sans);
+            margin: 8px 0;
+            transition: border-color 0.2s;
+        }
+
+        .auth-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .error-message {
+            color: #ff4444;
+            font-size: 13px;
+            margin: 10px 0;
+            min-height: 20px;
+        }
+
+        .auth-form a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .auth-form a:hover {
+            text-decoration: underline;
+        }
+
         /* Landing Header */
         .landing-header {
             padding: 20px 40px;
@@ -513,24 +553,216 @@
         </footer>
     </div>
 
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Login</h3>
+            <div class="auth-form">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <p id="login-error" class="error-message"></p>
+                <div class="modal-buttons">
+                    <button id="login-confirm" class="cta-button cta-primary">LOGIN</button>
+                    <button id="login-cancel" class="cta-button cta-secondary">CANCEL</button>
+                </div>
+                <p style="margin-top: 15px; font-size: 13px; text-align: center;">Don't have an account? <a href="#" id="go-to-register">Register here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Register</h3>
+            <div class="auth-form">
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <input type="password" id="register-password-confirm" placeholder="Confirm Password" required>
+                <p id="register-error" class="error-message"></p>
+                <div class="modal-buttons">
+                    <button id="register-confirm" class="cta-button cta-primary">REGISTER</button>
+                    <button id="register-cancel" class="cta-button cta-secondary">CANCEL</button>
+                </div>
+                <p style="margin-top: 15px; font-size: 13px; text-align: center;">Already have an account? <a href="#" id="go-to-login">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Check if user is logged in
-        function checkAuthAndRedirect() {
-            const token = localStorage.getItem('access_token');
-            if (token) {
-                // User is logged in, redirect to wizard
-                window.location.href = '/wizard';
-            } else {
-                // User not logged in, redirect to wizard (auth currently disabled)
-                window.location.href = '/wizard';
-            }
+        const API_BASE = '';
+        const loginModal = document.getElementById('login-modal');
+        const registerModal = document.getElementById('register-modal');
+
+        // Show/Hide Modals
+        function showLoginModal() {
+            loginModal.style.display = 'flex';
+            document.getElementById('login-error').textContent = '';
         }
 
-        // Add event listeners to all CTA buttons
-        document.getElementById('get-started-btn').addEventListener('click', checkAuthAndRedirect);
-        document.getElementById('login-hero-btn').addEventListener('click', checkAuthAndRedirect);
-        document.getElementById('signup-nav-btn').addEventListener('click', checkAuthAndRedirect);
-        document.getElementById('login-nav-btn').addEventListener('click', checkAuthAndRedirect);
+        function showRegisterModal() {
+            registerModal.style.display = 'flex';
+            document.getElementById('register-error').textContent = '';
+        }
+
+        function hideLoginModal() {
+            loginModal.style.display = 'none';
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('login-error').textContent = '';
+        }
+
+        function hideRegisterModal() {
+            registerModal.style.display = 'none';
+            document.getElementById('register-email').value = '';
+            document.getElementById('register-password').value = '';
+            document.getElementById('register-password-confirm').value = '';
+            document.getElementById('register-error').textContent = '';
+        }
+
+        // Check if user is already logged in
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            // User is already logged in, redirect to wizard
+            window.location.href = '/wizard';
+        }
+
+        // Add event listeners to all buttons to open modals
+        document.getElementById('get-started-btn').addEventListener('click', showRegisterModal);
+        document.getElementById('login-hero-btn').addEventListener('click', showLoginModal);
+        document.getElementById('signup-nav-btn').addEventListener('click', showRegisterModal);
+        document.getElementById('login-nav-btn').addEventListener('click', showLoginModal);
+
+        // Modal cancel buttons
+        document.getElementById('login-cancel').addEventListener('click', hideLoginModal);
+        document.getElementById('register-cancel').addEventListener('click', hideRegisterModal);
+
+        // Switch between modals
+        document.getElementById('go-to-register').addEventListener('click', (e) => {
+            e.preventDefault();
+            hideLoginModal();
+            showRegisterModal();
+        });
+
+        document.getElementById('go-to-login').addEventListener('click', (e) => {
+            e.preventDefault();
+            hideRegisterModal();
+            showLoginModal();
+        });
+
+        // Login Logic
+        document.getElementById('login-confirm').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+
+            if (!email || !password) {
+                errorEl.textContent = 'Please enter email and password';
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('username', email);
+                formData.append('password', password);
+
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Login failed');
+                }
+
+                const data = await response.json();
+                localStorage.setItem('access_token', data.access_token);
+
+                // Redirect to wizard
+                window.location.href = '/wizard';
+
+            } catch (error) {
+                errorEl.textContent = error.message;
+            }
+        });
+
+        // Register Logic
+        document.getElementById('register-confirm').addEventListener('click', async () => {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPass = document.getElementById('register-password-confirm').value;
+            const errorEl = document.getElementById('register-error');
+
+            if (!email || !password || !confirmPass) {
+                errorEl.textContent = 'Please fill all fields';
+                return;
+            }
+
+            if (password !== confirmPass) {
+                errorEl.textContent = "Passwords do not match";
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Registration failed');
+                }
+
+                // Auto login after register
+                const formData = new FormData();
+                formData.append('username', email);
+                formData.append('password', password);
+
+                const loginResp = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (loginResp.ok) {
+                    const data = await loginResp.json();
+                    localStorage.setItem('access_token', data.access_token);
+
+                    // Redirect to wizard
+                    window.location.href = '/wizard';
+                }
+
+            } catch (error) {
+                errorEl.textContent = error.message;
+            }
+        });
+
+        // Close modal when clicking outside
+        loginModal.addEventListener('click', (e) => {
+            if (e.target === loginModal) {
+                hideLoginModal();
+            }
+        });
+
+        registerModal.addEventListener('click', (e) => {
+            if (e.target === registerModal) {
+                hideRegisterModal();
+            }
+        });
+
+        // Handle Enter key in forms
+        document.getElementById('login-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('login-confirm').click();
+            }
+        });
+
+        document.getElementById('register-password-confirm').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('register-confirm').click();
+            }
+        });
     </script>
 </body>
 </html>
