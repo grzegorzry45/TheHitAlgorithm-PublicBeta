@@ -460,10 +460,9 @@ function initializeParameterSelection() {
 function updateAnalyzeButtonState() {
     const analyzeBtn = document.getElementById('analyze-playlist-btn');
     const selectedParams = getSelectedParameters();
-    const hasFiles = playlistFiles.length >= 2 && playlistFiles.length <= 30;
-    const hasParams = selectedParams.length > 0;
-
-    analyzeBtn.disabled = !hasFiles || !hasParams;
+        const hasFiles = playlistFiles.length >= 2;
+
+        analyzeBtn.disabled = !hasFiles;
 }
 
 function getSelectedParameters() {
@@ -530,9 +529,13 @@ function handlePlaylistFiles(files) {
 
     if (playlistFiles.length > 0 && playlistFiles.length < 2) {
         showError('Please upload at least 2 tracks');
-    } else if (playlistFiles.length > 30) {
-        showError('Maximum 30 tracks allowed');
-    }
+        } else {
+
+            // Add files
+
+    
+
+    
 }
 
 async function analyzePlaylist() {

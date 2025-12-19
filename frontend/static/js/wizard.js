@@ -440,6 +440,9 @@ function initializeModeToggle() {
             switchAnalysisMode(mode);
         });
     });
+
+    // Initialize UI state to standard mode on page load
+    switchAnalysisMode('standard');
 }
 
 function switchAnalysisMode(mode) {
@@ -461,6 +464,12 @@ function switchAnalysisMode(mode) {
     parameterSelections.forEach(section => {
         section.style.display = mode === 'ai' ? 'none' : 'block';
     });
+
+    // Hide "Single Reference Track" option in AI Mode
+    const singleTrackCard = document.querySelector('.reference-card[data-reference="single"]');
+    if (singleTrackCard) {
+        singleTrackCard.style.display = mode === 'ai' ? 'none' : 'block';
+    }
 
     // Update compare button state
     updateCompareButton();
@@ -2053,7 +2062,7 @@ function selectAllPlaylistParams() {
 
 function updateAnalyzeButton() {
     const analyzeBtn = document.getElementById('analyze-playlist-btn');
-    const hasFiles = playlistFiles.length >= 2 && playlistFiles.length <= 30;
+    const hasFiles = playlistFiles.length >= 2;
     const hasParams = getPlaylistParameters().length > 0;
     if (analyzeBtn) {
         analyzeBtn.disabled = !(hasFiles && hasParams);
@@ -2072,76 +2081,79 @@ function getPlaylistParameters() {
 
 // ===== PRESETS =====
 
-const SYSTEM_PRESETS = [
-    {
-        id: 'sys_modern_pop',
-        name: '🏆 Modern Pop Hit (2024)',
-        type: 'system',
-        timestamp: new Date().toISOString(),
-        profile: {
-            'bpm': { mean: 122.0, std: 4.0, min: 90, max: 160 },
-            'energy': { mean: 0.72, std: 0.1, min: 0.4, max: 0.95 },
-            'danceability': { mean: 0.75, std: 0.08, min: 0.5, max: 0.9 },
-            'loudness': { mean: -6.5, std: 1.5, min: -10, max: -4 },
-            'spectral_rolloff': { mean: 4500, std: 1200, min: 2000, max: 8000 },
-            'low_energy': { mean: 25.0, std: 5.0, min: 10, max: 40 },
-            'mid_energy': { mean: 45.0, std: 5.0, min: 30, max: 60 },
-            'high_energy': { mean: 30.0, std: 5.0, min: 10, max: 50 },
-            'beat_strength': { mean: 3.5, std: 0.5, min: 2, max: 5 },
-            'dynamic_range': { mean: 6.0, std: 2.0, min: 3, max: 12 }
-        }
-    },
-    {
-        id: 'sys_techno_bunker',
-        name: '🎹 Techno Bunker',
-        type: 'system',
-        timestamp: new Date().toISOString(),
-        profile: {
-            'bpm': { mean: 132.0, std: 2.0, min: 128, max: 135 },
-            'energy': { mean: 0.85, std: 0.05, min: 0.7, max: 0.98 },
-            'danceability': { mean: 0.78, std: 0.05, min: 0.6, max: 0.9 },
-            'loudness': { mean: -5.5, std: 1.0, min: -8, max: -3 },
-            'sub_bass_presence': { mean: 35.0, std: 8.0, min: 20, max: 60 },
-            'repetition_score': { mean: 0.85, std: 0.1, min: 0.5, max: 1.0 },
-            'stereo_width': { mean: 0.7, std: 0.15, min: 0.4, max: 0.9 }
-        }
-    },
-    {
-        id: 'sys_lofi_study',
-        name: '☕ Lo-Fi Study Beats',
-        type: 'system',
-        timestamp: new Date().toISOString(),
-        profile: {
-            'bpm': { mean: 85.0, std: 5.0, min: 70, max: 95 },
-            'energy': { mean: 0.4, std: 0.1, min: 0.2, max: 0.6 },
-            'danceability': { mean: 0.6, std: 0.1, min: 0.4, max: 0.8 },
-            'loudness': { mean: -12.0, std: 2.0, min: -16, max: -9 },
-            'transient_energy': { mean: 15.0, std: 5.0, min: 5, max: 30 },
-            'harmonic_to_noise_ratio': { mean: 8.0, std: 3.0, min: 0, max: 15 } // Lower HNR = more noise/texture
-        }
-    }
-];
+// IMPORTANT: System presets use TWO different formats:
+//
+// 1. GATEKEEPER FORMAT (recommended for playlists with many tracks):
+//    - Uses mode: "gatekeeper" and tracks: [...]
+//    - Each track has individual Golden 8 parameters
+//    - Backend uses sklearn k-NN for comparison (finds closest reference track)
+//    - More accurate for complex playlists
+//
+// 2. STATISTICAL FORMAT (legacy, for simple profiles):
+//    - Uses mean, std, min, max for each parameter
+//    - Backend uses statistical comparison
+//    - Less accurate but smaller file size
+//
+// Example Gatekeeper format:
+// {
+//     id: 'sys_my_preset',
+//     name: '🎵 My Preset',
+//     type: 'system',
+//     timestamp: new Date().toISOString(),
+//     profile: {
+//         mode: "gatekeeper",
+//         tracks: [
+//             { bpm: 120, beat_strength: 1.2, ... },
+//             { bpm: 125, beat_strength: 1.3, ... },
+//             ...
+//         ]
+//     }
+// }
+//
+// For large presets (>100 tracks), consider loading from external JSON file
+// to reduce wizard.js size.
+
+// System presets are now loaded dynamically from /api/system-presets
+// To add new presets: add JSON file to backend/presets/ and update presets_index.json
+const SYSTEM_PRESETS = [];
+
 
 async function loadPresetsForWizard() {
-    const systemPresets = SYSTEM_PRESETS;
+    let systemPresets = [];
     let userPresets = [];
 
+    // Load system presets from API (no auth required)
+    try {
+        const sysResponse = await fetch(`${API_BASE}/api/system-presets`);
+        if (sysResponse.ok) {
+            const data = await sysResponse.json();
+            // Convert presets index to format expected by UI
+            systemPresets = data.presets.map(p => ({
+                id: p.id,
+                name: p.name,
+                type: 'system',
+                description: p.description,
+                tracks_count: p.tracks_count,
+                timestamp: p.created_at
+            }));
+        }
+    } catch (error) {
+        console.error('Error fetching system presets:', error);
+    }
+
+    // Load user presets if authenticated
     if (authToken) {
-        // Fetch from cloud
         try {
             const response = await fetch(`${API_BASE}/api/presets`, { headers: getAuthHeaders() });
-            if (handleAuthError(response)) return { system: systemPresets, user: [] }; // Handle re-login
+            if (handleAuthError(response)) return { system: systemPresets, user: [] };
             if (!response.ok) throw new Error('Failed to fetch cloud presets');
             userPresets = await response.json();
         } catch (error) {
             console.error('Error fetching cloud presets:', error);
             showMessage('Failed to load your cloud presets.', 'error');
         }
-    } else {
-        // If not logged in, user presets are empty (only system presets are shown)
-        // User presets should not be loaded from localStorage if not logged in,
-        // as the expectation is cloud-based storage when authenticated.
     }
+
     return { system: systemPresets, user: userPresets };
 }
 
@@ -2218,20 +2230,50 @@ function renderPresetsInWizard() {
 
         // Add click handlers for LOAD
         listDiv.querySelectorAll('.preset-btn.load').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const type = e.target.dataset.type;
                 let preset;
+
                 if (type === 'system') {
-                    preset = system.find(p => p.id === e.target.dataset.id);
+                    // For system presets, we need to load full data from API
+                    const presetId = e.target.dataset.id;
+                    const presetMeta = system.find(p => p.id === presetId);
+
+                    if (!presetMeta) {
+                        showMessage('System preset not found!', 'error');
+                        return;
+                    }
+
+                    try {
+                        showMessage(`Loading ${presetMeta.name}...`, 'info');
+                        const response = await fetch(`${API_BASE}/api/system-presets/${presetId}`);
+                        if (!response.ok) throw new Error('Failed to load system preset');
+
+                        const presetData = await response.json();
+                        // Add metadata to preset data
+                        preset = {
+                            id: presetId,
+                            name: presetData.name || presetMeta.name,
+                            type: 'system',
+                            profile: presetData.profile,
+                            analysis: presetData.analysis || []
+                        };
+
+                        loadPresetInWizard(preset);
+                    } catch (error) {
+                        console.error('Error loading system preset:', error);
+                        showMessage('Failed to load system preset', 'error');
+                    }
                 } else { // type === 'user'
                     // For user presets, we need to fetch it from the backend list by id
                     const presetId = parseInt(e.target.dataset.id);
                     preset = user.find(p => p.id === presetId);
-                }
-                if (preset) {
-                    loadPresetInWizard(preset);
-                } else {
-                    showMessage('Preset not found!', 'error');
+
+                    if (preset) {
+                        loadPresetInWizard(preset);
+                    } else {
+                        showMessage('Preset not found!', 'error');
+                    }
                 }
             });
         });

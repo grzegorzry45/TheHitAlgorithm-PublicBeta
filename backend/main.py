@@ -1021,10 +1021,71 @@ def delete_preset(
     db_preset = db.query(models.Preset).filter(models.Preset.id == preset_id, models.Preset.owner_id == current_user.id).first()
     if not db_preset:
         raise HTTPException(status_code=404, detail="Preset not found")
-    
+
     db.delete(db_preset)
     db.commit()
     return {"message": "Preset deleted successfully"}
+
+
+# SYSTEM PRESETS ENDPOINTS (Factory/Official Presets)
+
+PRESETS_DIR = Path(__file__).parent / "presets"
+PRESETS_INDEX = PRESETS_DIR / "presets_index.json"
+
+@app.get("/api/system-presets")
+async def get_system_presets():
+    """
+    Get list of available system/factory presets
+    Returns metadata only (name, description, track count) - not full data
+    """
+    if not PRESETS_INDEX.exists():
+        return {"presets": []}
+
+    try:
+        with open(PRESETS_INDEX, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading system presets: {str(e)}")
+
+
+@app.get("/api/system-presets/{preset_id}")
+async def get_system_preset(preset_id: str):
+    """
+    Get full data for a specific system preset
+    This loads the actual preset JSON file with all track data
+    """
+    if not PRESETS_INDEX.exists():
+        raise HTTPException(status_code=404, detail="No system presets available")
+
+    try:
+        # Load index to get file name
+        with open(PRESETS_INDEX, 'r', encoding='utf-8') as f:
+            index_data = json.load(f)
+
+        # Find preset in index
+        preset_info = next(
+            (p for p in index_data['presets'] if p['id'] == preset_id),
+            None
+        )
+
+        if not preset_info:
+            raise HTTPException(status_code=404, detail="System preset not found")
+
+        # Load full preset data
+        preset_file = PRESETS_DIR / preset_info['file']
+        if not preset_file.exists():
+            raise HTTPException(status_code=404, detail="Preset file not found")
+
+        with open(preset_file, 'r', encoding='utf-8') as f:
+            preset_data = json.load(f)
+
+        return preset_data
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading preset: {str(e)}")
 
 
 @app.get("/health")

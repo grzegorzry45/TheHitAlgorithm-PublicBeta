@@ -1,0 +1,13 @@
+{
+  "presets": [
+    {
+      "id": "spotify_dance_2025",
+      "name": "🎵 Spotify Dance (2025)",
+      "description": "100 top dance tracks from Spotify, professionally analyzed",
+      "tracks_count": 100,
+      "file": "spotify_dance_2025.json",
+      "created_at": "2025-11-05",
+      "tags": ["dance", "electronic", "commercial"]
+    }
+  ]
+}
