@@ -28,7 +28,7 @@ let maxStepReached = 1;
 let progressModalInterval = null;
 
 // AI MODE / GATEKEEPER
-let analysisMode = 'standard'; // 'standard' or 'ai'
+let analysisMode = 'ai'; // 'standard' or 'ai' - Default to AI mode
 let gatekeeperResults = null;
 
 // ===== AUTHENTICATION =====
@@ -441,8 +441,8 @@ function initializeModeToggle() {
         });
     });
 
-    // Initialize UI state to standard mode on page load
-    switchAnalysisMode('standard');
+    // Initialize UI state to AI mode on page load
+    switchAnalysisMode('ai');
 }
 
 function switchAnalysisMode(mode) {
