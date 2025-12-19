@@ -476,10 +476,8 @@
         <header class="landing-header">
             <div class="landing-logo">THE HIT ALGORITHM</div>
             <nav class="landing-nav">
-                <button class="nav-btn" onclick="scrollToSection('features')">Features</button>
-                <button class="nav-btn" onclick="scrollToSection('how-it-works')">How It Works</button>
                 <button class="nav-btn" id="login-nav-btn">Login</button>
-                <button class="nav-btn primary" id="signup-nav-btn">Get Started Free</button>
+                <button class="nav-btn primary" id="signup-nav-btn">Register</button>
             </nav>
         </header>
 
@@ -497,192 +495,15 @@
                 </p>
 				<div class="hero-cta">
                     <button class="cta-button cta-primary" id="get-started-btn">
-                        Start Free Analysis
+                        Register
                     </button>
-                    <button class="cta-button cta-secondary" onclick="scrollToSection('how-it-works')">
-                        See How It Works
+                    <button class="cta-button cta-secondary" id="login-hero-btn">
+                        Login
                     </button>
                 </div>
 				
             </div>
 
-        </section>
-
-        <!-- Features Section -->
-        <section class="features" id="features">
-            <h2 class="section-title">Why Artists & Producers Choose Us</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3 class="feature-title">AI-Powered Gatekeeper Mode</h3>
-                    <p class="feature-description">
-                        Upload a playlist, analyze your track, and get instant feedback on what needs to change.
-                        Our AI identifies critical issues using the Golden 8 parameters that curators actually care about.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🔬</div>
-                    <h3 class="feature-title">Deep Audio Analysis</h3>
-                    <p class="feature-description">
-                        40+ audio parameters analyzed: BPM, energy, spectral content, dynamic range, and more.
-                        See exactly how your track compares to playlist standards.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3 class="feature-title">Instant Recommendations</h3>
-                    <p class="feature-description">
-                        Get actionable suggestions in seconds. Know exactly what to adjust in your mix, master, or production
-                        to match your target playlist's sonic profile.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3 class="feature-title">Beautiful Reports</h3>
-                    <p class="feature-description">
-                        Export professional PDF reports with all analysis data, comparisons, and recommendations.
-                        Perfect for sharing with your team or clients.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">💾</div>
-                    <h3 class="feature-title">Save & Reuse Presets</h3>
-                    <p class="feature-description">
-                        Analyze a playlist once, save it as a preset, and compare unlimited tracks against it.
-                        Perfect for targeting multiple playlists or testing different versions.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3 class="feature-title">Multiple Analysis Modes</h3>
-                    <p class="feature-description">
-                        Standard mode for flexible comparisons, or AI Gatekeeper mode for quick pass/fail verdicts.
-                        Choose the workflow that fits your needs.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- How It Works -->
-        <section class="how-it-works" id="how-it-works">
-            <h2 class="section-title">How It Works</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3>Upload Your Target Playlist</h3>
-                        <p>
-                            Select 2-30 tracks from the playlist you're targeting. Our AI analyzes every track
-                            to create a comprehensive sonic profile of what the playlist curator is looking for.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3>Analyze Your Track</h3>
-                        <p>
-                            Upload your track and let our professional-grade audio analysis engine extract 40+ parameters.
-                            We examine everything from BPM and energy to spectral content and dynamic range.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3>Get Instant Feedback</h3>
-                        <p>
-                            See your match score, critical alerts, and the Golden 8 comparison table.
-                            Understand exactly where your track fits and what needs adjustment.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
-                        <h3>Optimize & Export</h3>
-                        <p>
-                            Use our AI-generated recommendations to refine your track. Export professional PDF reports
-                            to share with your team, or use our LLM prompt for deeper A&R insights.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Modes Section -->
-        <section class="modes">
-            <h2 class="section-title">Choose Your Analysis Mode</h2>
-            <div class="modes-grid">
-                <div class="mode-card">
-                    <h3 class="mode-title">📊 Standard Mode</h3>
-                    <p class="mode-description">
-                        Flexible analysis with full control over which parameters to analyze.
-                        Perfect for detailed comparisons and comprehensive reports.
-                    </p>
-                    <ul class="mode-features">
-                        <li>Choose from 40+ audio parameters</li>
-                        <li>Batch compare multiple tracks</li>
-                        <li>Save and load custom presets</li>
-                        <li>1:1 track comparisons</li>
-                        <li>Export HTML reports</li>
-                    </ul>
-                </div>
-
-                <div class="mode-card featured">
-                    <div class="mode-badge">RECOMMENDED</div>
-                    <h3 class="mode-title">AI Gatekeeper</h3>
-                    <p class="mode-description">
-                        Fast, AI-powered pass/fail analysis using the Golden 8 parameters.
-                        Get instant verdicts with actionable recommendations.
-                    </p>
-                    <ul class="mode-features">
-                        <li>Automatic Golden 8 parameter analysis</li>
-                        <li>Instant match scores and alerts</li>
-                        <li>Z-score based comparisons</li>
-                        <li>AI verdict prompts for ChatGPT/Claude</li>
-                        <li>Export professional PDF reports</li>
-                        <li>Nearest neighbor reference matching</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- Social Proof -->
-        <section class="social-proof">
-            <div class="stats-grid">
-                <div class="stat">
-                    <div class="stat-number">40+</div>
-                    <div class="stat-label">Audio Parameters</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number">8</div>
-                    <div class="stat-label">Golden Parameters</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-number">Fast</div>
-                    <div class="stat-label">Analysis Speed</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Final CTA -->
-        <section class="final-cta">
-            <h2>Ready to Match the Algorithm?</h2>
-            <p>Start analyzing your tracks today and get the insights you need to dominate playlists.</p>
-            <div class="hero-cta">
-                <button class="cta-button cta-primary" id="final-cta-btn">
-                    Start Free Analysis
-                </button>
-            </div>
         </section>
 
         <!-- Footer -->
@@ -693,14 +514,6 @@
     </div>
 
     <script>
-        // Smooth scroll function
-        function scrollToSection(id) {
-            const element = document.getElementById(id);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-
         // Check if user is logged in
         function checkAuthAndRedirect() {
             const token = localStorage.getItem('access_token');
@@ -715,7 +528,7 @@
 
         // Add event listeners to all CTA buttons
         document.getElementById('get-started-btn').addEventListener('click', checkAuthAndRedirect);
-        document.getElementById('final-cta-btn').addEventListener('click', checkAuthAndRedirect);
+        document.getElementById('login-hero-btn').addEventListener('click', checkAuthAndRedirect);
         document.getElementById('signup-nav-btn').addEventListener('click', checkAuthAndRedirect);
         document.getElementById('login-nav-btn').addEventListener('click', checkAuthAndRedirect);
     </script>
